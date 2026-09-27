@@ -6,6 +6,9 @@ function Products() {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const [deleteProductId, setDeleteProductId] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
   const [form, setForm] = useState({
     dressName: '',
     category: '',
@@ -32,7 +35,7 @@ function Products() {
 
       setMessage(
         error.response?.data?.message ||
-        'Failed to load products',
+          'Failed to load products',
       );
     } finally {
       setLoading(false);
@@ -98,13 +101,12 @@ function Products() {
 
       resetForm();
       fetchProducts();
-
     } catch (error) {
       console.error(error);
 
       setMessage(
         error.response?.data?.message ||
-        'Operation failed',
+          'Operation failed',
       );
     }
   };
@@ -130,29 +132,36 @@ function Products() {
   };
 
   const handleDelete = async (id) => {
-    const confirmed = window.confirm(
-      'Are you sure you want to delete this dress?',
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
     try {
       await api.delete(`/products/${id}`);
 
       setMessage('Dress deleted successfully');
 
       fetchProducts();
-
     } catch (error) {
       console.error(error);
 
       setMessage(
         error.response?.data?.message ||
-        'Failed to delete dress',
+          'Failed to delete dress',
       );
     }
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteProductId) {
+      return;
+    }
+
+    await handleDelete(deleteProductId);
+
+    setShowDeleteModal(false);
+    setDeleteProductId(null);
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setDeleteProductId(null);
   };
 
   const handleSearch = async () => {
@@ -167,13 +176,12 @@ function Products() {
       );
 
       setProducts(response.data);
-
     } catch (error) {
       console.error(error);
 
       setMessage(
         error.response?.data?.message ||
-        'Search failed',
+          'Search failed',
       );
     }
   };
@@ -194,7 +202,9 @@ function Products() {
       <div className="product-form-box">
 
         <h3>
-          {editingId ? 'Update Dress' : 'Add New Dress'}
+          {editingId
+            ? 'Update Dress'
+            : 'Add New Dress'}
         </h3>
 
         <form onSubmit={handleSubmit}>
@@ -271,7 +281,9 @@ function Products() {
           />
 
           <button type="submit">
-            {editingId ? 'Update Dress' : 'Add Dress'}
+            {editingId
+              ? 'Update Dress'
+              : 'Add Dress'}
           </button>
 
           {editingId && (
@@ -295,7 +307,9 @@ function Products() {
           type="text"
           placeholder="Search dress or category..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) =>
+            setSearch(e.target.value)
+          }
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               handleSearch();
@@ -364,15 +378,25 @@ function Products() {
                   return (
                     <tr key={product._id}>
 
-                      <td>{product.dressName}</td>
+                      <td>
+                        {product.dressName}
+                      </td>
 
-                      <td>{product.category}</td>
+                      <td>
+                        {product.category}
+                      </td>
 
-                      <td>{product.brand}</td>
+                      <td>
+                        {product.brand}
+                      </td>
 
-                      <td>{product.size}</td>
+                      <td>
+                        {product.size}
+                      </td>
 
-                      <td>{product.color}</td>
+                      <td>
+                        {product.color}
+                      </td>
 
                       <td>
                         Rs. {product.actualPrice}
@@ -401,9 +425,12 @@ function Products() {
                         </button>
 
                         <button
-                          onClick={() =>
-                            handleDelete(product._id)
-                          }
+                          onClick={() => {
+                            setDeleteProductId(
+                              product._id,
+                            );
+                            setShowDeleteModal(true);
+                          }}
                         >
                           Delete
                         </button>
@@ -418,6 +445,57 @@ function Products() {
             </tbody>
 
           </table>
+
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+
+      {showDeleteModal && (
+        <div
+          className="delete-modal-overlay"
+          onClick={cancelDelete}
+        >
+
+          <div
+            className="delete-modal"
+            onClick={(e) =>
+              e.stopPropagation()
+            }
+          >
+
+            <div className="delete-modal-icon">
+              🗑️
+            </div>
+
+            <h2>
+              Delete Dress?
+            </h2>
+
+            <p>
+              Are you sure you want to
+              delete this dress?
+            </p>
+
+            <div className="delete-modal-actions">
+
+              <button
+                className="cancel-delete-btn"
+                onClick={cancelDelete}
+              >
+                Cancel
+              </button>
+
+              <button
+                className="confirm-delete-btn"
+                onClick={confirmDelete}
+              >
+                Delete
+              </button>
+
+            </div>
+
+          </div>
 
         </div>
       )}
