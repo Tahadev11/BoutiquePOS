@@ -71,7 +71,7 @@ function Receipt() {
               alt="WhatsApp"
               className="whatsapp-icon"
             />
-            <span>0315-3039469</span>
+            <span>0315-3039460</span>
           </p>
 
           <div className="receipt-heading-line"></div>
