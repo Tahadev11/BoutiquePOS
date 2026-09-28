@@ -10,9 +10,9 @@ import {
   UseGuards,
 } from '@nestjs/common';
 
-import { ProductsService } from './products.service';
-import { Product } from './schemas/product.schema';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ProductsService } from './products.service.js';
+import { Product } from './schemas/product.schema.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 
 @Controller('products')
 export class ProductsController {

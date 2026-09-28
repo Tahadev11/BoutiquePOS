@@ -7,9 +7,9 @@ import {
   UseGuards,
 } from '@nestjs/common';
 
-import { SalesService } from './sales.service';
-import { CheckoutDto } from './dto/checkout.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { SalesService } from './sales.service.js';
+import { CheckoutDto } from './dto/checkout.dto.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 
 @Controller('sales')
 export class SalesController {
