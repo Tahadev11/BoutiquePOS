@@ -1947,69 +1947,66 @@ button.remove-cart-button:hover {
 
 /* print */
 @media print {
-  /* Thermal page length dynamic rakhein */
+  /* Continuous Thermal Roll Page Setup */
   @page {
-    size: 80mm auto;
+    size: 80mm auto !important;
     margin: 0 !important;
   }
 
-  /* Reset layout to avoid extra whitespace */
+  /* Reset document structure to tight thermal height */
   html,
   body {
     width: 80mm !important;
     height: auto !important;
-    min-height: initial !important;
+    min-height: 0 !important;
     max-height: max-content !important;
     margin: 0 !important;
     padding: 0 !important;
-    background: #FFFFFF !important;
+    background: #ffffff !important;
     overflow: visible !important;
   }
 
-  /* Hide external page elements & headers/footers */
-  body * {
-    visibility: hidden;
-  }
-
-  /* Only show receipt area */
-  .receipt-page,
-  .receipt-page * {
-    visibility: visible;
-  }
-
-  .receipt-page {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 80mm !important;
-    height: auto !important;
-    min-height: initial !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    display: block !important;
-    background: #FFFFFF !important;
-  }
-
-  .receipt {
-    width: 72mm !important;
-    height: auto !important;
-    margin: 0 auto !important;
-    padding: 4mm !important;
-    border: none !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    background: #FFFFFF !important;
-    box-sizing: border-box;
-    page-break-after: avoid !important;
-    page-break-inside: avoid !important;
-  }
-
-  /* Hide print button & non-receipt elements */
+  /* Hide print buttons, headers, footers & Netlify badges */
   .print-receipt-button,
   footer,
   nav,
-  .powered-by-netlify {
+  header,
+  .powered-by-netlify,
+  iframe,
+  #netlify-badge {
     display: none !important;
+  }
+
+  /* Container wrapper */
+  .receipt-page {
+    position: static !important;
+    width: 80mm !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: max-content !important;
+    padding: 0 !important;
+    margin: 0 auto !important;
+    display: block !important;
+    background: #ffffff !important;
+    overflow: hidden !important;
+  }
+
+  /* Receipt body */
+  .receipt {
+    width: 72mm !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: max-content !important;
+    margin: 0 auto !important;
+    padding: 4mm 2mm !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+    box-sizing: border-box;
+    page-break-after: avoid !important;
+    page-break-inside: avoid !important;
+    break-after: avoid !important;
   }
 
   /* Product divider */
@@ -2076,6 +2073,8 @@ button.remove-cart-button:hover {
     font-size: 8px !important;
     margin-bottom: 0 !important;
     padding-bottom: 0 !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
   }
 
   .receipt-address {
@@ -2083,7 +2082,7 @@ button.remove-cart-button:hover {
     line-height: 1.3 !important;
   }
 
-  /* Force black text for thermal printer */
+  /* Force pure black color for thermal paper intensity */
   .receipt,
   .receipt * {
     color: #000000 !important;
