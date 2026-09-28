@@ -9,14 +9,14 @@ import { Model } from 'mongoose';
 import {
   Sale,
   SaleDocument,
-} from './schemas/sale.schema.js';
+} from './schemas/sale.schema';
 
 import {
   Product,
   ProductDocument,
-} from '../products/schemas/product.schema.js';
+} from '../products/schemas/product.schema';
 
-import { CheckoutDto } from './dto/checkout.dto.js';
+import { CheckoutDto } from './dto/checkout.dto';
 
 @Injectable()
 export class SalesService {

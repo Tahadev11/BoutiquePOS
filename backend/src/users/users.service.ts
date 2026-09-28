@@ -10,7 +10,7 @@ import * as bcrypt from 'bcrypt';
 import {
   User,
   UserDocument,
-} from './schemas/user.schema.js';
+} from './schemas/user.schema';
 
 @Injectable()
 export class UsersService {

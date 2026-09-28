@@ -5,17 +5,17 @@ import { PassportModule } from '@nestjs/passport';
 import {
   Sale,
   SaleSchema,
-} from './schemas/sale.schema.js';
+} from './schemas/sale.schema';
 
 import {
   Product,
   ProductSchema,
-} from '../products/schemas/product.schema.js';
+} from '../products/schemas/product.schema';
 
-import { SalesController } from './sales.controller.js';
-import { SalesService } from './sales.service.js';
+import { SalesController } from './sales.controller';
+import { SalesService } from './sales.service';
 
-import { AuthModule } from '../auth/auth.module.js';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [

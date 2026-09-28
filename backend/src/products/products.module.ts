@@ -2,11 +2,11 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { PassportModule } from '@nestjs/passport';
 
-import { ProductsController } from './products.controller.js';
-import { ProductsService } from './products.service.js';
-import { Product, ProductSchema } from './schemas/product.schema.js';
+import { ProductsController } from './products.controller';
+import { ProductsService } from './products.service';
+import { Product, ProductSchema } from './schemas/product.schema';
 
-import { AuthModule } from '../auth/auth.module.js';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [

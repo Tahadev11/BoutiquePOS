@@ -2,12 +2,12 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 
-import { AppController } from './app.controller.js';
-import { AppService } from './app.service.js';
-import { ProductsModule } from './products/products.module.js';
-import { UsersModule } from './users/users.module.js';
-import { AuthModule } from './auth/auth.module.js';
-import { SalesModule } from './sales/sales.module.js';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { ProductsModule } from './products/products.module';
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
+import { SalesModule } from './sales/sales.module';
 
 @Module({
   imports: [

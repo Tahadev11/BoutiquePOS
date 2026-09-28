@@ -5,7 +5,7 @@ import { Model } from 'mongoose';
 import {
   Product,
   ProductDocument,
-} from './schemas/product.schema.js';
+} from './schemas/product.schema';
 
 @Injectable()
 export class ProductsService {
