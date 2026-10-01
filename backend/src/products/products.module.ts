@@ -29,5 +29,9 @@ import { AuthModule } from '../auth/auth.module';
   providers: [
     ProductsService,
   ],
+
+  exports: [
+    MongooseModule,
+  ],
 })
 export class ProductsModule {}

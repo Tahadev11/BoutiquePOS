@@ -1,117 +1,8 @@
-// import React from 'react';
-// import Products from './Products';
-// import POS from './POS';
-// import Sales from './Sales';
-
-// function Dashboard({ onLogout }) {
-//     const [page, setPage] = React.useState('dashboard');
-
-//     const handleLogout = () => {
-//         localStorage.removeItem('accessToken');
-//         onLogout();
-//     };
-
-//     return (
-//         <div className="dashboard-page">
-
-//             <header className="dashboard-header">
-
-//                 <div>
-//                     <h1>Glam By HH</h1>
-//                     <p>Admin Dashboard</p>
-//                 </div>
-
-//                 <button onClick={handleLogout}>
-//                     Logout
-//                 </button>
-
-//             </header>
-
-//             <nav className="dashboard-nav">
-
-//                 <button onClick={() => setPage('dashboard')}>
-//                     Dashboard
-//                 </button>
-
-//                 <button onClick={() => setPage('products')}>
-//                     Products
-//                 </button>
-
-//                 <button onClick={() => setPage('pos')}>
-//                     POS
-//                 </button>
-
-//                 <button onClick={() => setPage('sales')}>
-//                     Sales
-//                 </button>
-
-//                 <button onClick={() => setPage('reports')}>
-//                     Reports
-//                 </button>
-
-//             </nav>
-
-//             <main className="dashboard-content">
-
-//                 {page === 'dashboard' && (
-//                     <>
-//                         <h2>Dashboard</h2>
-
-//                         <div className="dashboard-cards">
-
-//                             <div className="dashboard-card">
-//                                 <h3>Products</h3>
-//                                 <p>Manage dresses and stock</p>
-//                             </div>
-
-//                             <div className="dashboard-card">
-//                                 <h3>POS</h3>
-//                                 <p>Create new sales</p>
-//                             </div>
-
-//                             <div className="dashboard-card">
-//                                 <h3>Sales</h3>
-//                                 <p>View previous sales</p>
-//                             </div>
-
-//                             <div className="dashboard-card">
-//                                 <h3>Reports</h3>
-//                                 <p>View business reports</p>
-//                             </div>
-
-//                         </div>
-//                     </>
-//                 )}
-
-//                 {page === 'products' && (
-//                     <Products />
-//                 )}
-
-//                 {page === 'pos' && (
-//                     <POS />
-//                 )}
-
-//                 {page === 'sales' && (
-//                     <Sales />
-//                 )}
-
-//                 {page === 'reports' && (
-//                     <h2>Reports — Coming Next</h2>
-//                 )}
-
-//             </main>
-
-//         </div>
-//     );
-// }
-
-// export default Dashboard;
-
-
 import React from 'react';
 import Products from './Products';
 import POS from './POS';
 import Sales from './Sales';
+import Suppliers from './Suppliers';
 
 function Dashboard({ onLogout }) {
     const [page, setPage] = React.useState('dashboard');
@@ -167,11 +58,11 @@ function Dashboard({ onLogout }) {
                     </button>
 
                     <button
-                        className={page === 'reports' ? 'active' : ''}
-                        onClick={() => setPage('reports')}
+                        className={page === 'suppliers' ? 'active' : ''}
+                        onClick={() => setPage('suppliers')}
                     >
-                        <span>◫</span>
-                        Reports
+                        <span>♢</span>
+                        Suppliers
                     </button>
 
                 </nav>
@@ -201,7 +92,7 @@ function Dashboard({ onLogout }) {
                             {page === 'products' && 'Products'}
                             {page === 'pos' && 'New Sale'}
                             {page === 'sales' && 'Sales'}
-                            {page === 'reports' && 'Reports'}
+                            {page === 'suppliers' && 'Suppliers'}
                         </h1>
 
                         <p>
@@ -220,7 +111,8 @@ function Dashboard({ onLogout }) {
                                     <h2>Welcome to Glam By HH ✨</h2>
                                     <p>
                                         Manage your boutique, products,
-                                        sales and inventory from one place.
+                                        sales, suppliers and inventory
+                                        from one place.
                                     </p>
                                 </div>
                             </div>
@@ -253,10 +145,10 @@ function Dashboard({ onLogout }) {
 
                                 <div
                                     className="dashboard-card"
-                                    onClick={() => setPage('reports')}
+                                    onClick={() => setPage('suppliers')}
                                 >
-                                    <h3>Reports</h3>
-                                    <p>View business reports</p>
+                                    <h3>Suppliers</h3>
+                                    <p>Manage suppliers and balances</p>
                                 </div>
 
                             </div>
@@ -275,11 +167,8 @@ function Dashboard({ onLogout }) {
                         <Sales />
                     )}
 
-                    {page === 'reports' && (
-                        <div className="coming-soon">
-                            <h2>Reports</h2>
-                            <p>Reports — Coming Next</p>
-                        </div>
+                    {page === 'suppliers' && (
+                        <Suppliers />
                     )}
 
                 </main>

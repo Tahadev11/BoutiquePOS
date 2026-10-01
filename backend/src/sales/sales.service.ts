@@ -57,6 +57,7 @@ export class SalesService {
       const discountAmount =
         product.actualPrice * (product.discount / 100);
 
+      // Calculate selling price after discount
       const sellingPrice =
         product.actualPrice - discountAmount;
 
@@ -64,12 +65,21 @@ export class SalesService {
       const subtotal =
         sellingPrice * item.quantity;
 
+      // Calculate profit
+      const profitPerItem =
+        sellingPrice - product.purchasePrice;
+
+      const totalProfit =
+        profitPerItem * item.quantity;
+
       saleItems.push({
         product: product._id,
         dressName: product.dressName,
         quantity: item.quantity,
         price: product.actualPrice,
         discount: product.discount,
+        purchasePrice: product.purchasePrice,
+        profit: totalProfit,
         subtotal,
       });
 

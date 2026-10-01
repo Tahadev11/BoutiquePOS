@@ -38,6 +38,10 @@ export class CreateProductDto {
   @Max(100)
   discount: number;
 
+  @IsNumber()
+  @Min(0)
+  purchasePrice: number;
+
   @IsInt()
   @Min(0)
   stockQuantity: number;

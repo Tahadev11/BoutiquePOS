@@ -8,6 +8,8 @@ import { ProductsModule } from './products/products.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { SalesModule } from './sales/sales.module';
+import { SuppliersModule } from './suppliers/suppliers.module';
+import { ExpensesModule } from './expenses/expenses.module';
 
 @Module({
   imports: [
@@ -15,12 +17,16 @@ import { SalesModule } from './sales/sales.module';
       isGlobal: true,
     }),
 
-    MongooseModule.forRoot(process.env.MONGODB_URI!),
+    MongooseModule.forRoot(
+      process.env.MONGODB_URI!,
+    ),
 
     ProductsModule,
     UsersModule,
     AuthModule,
     SalesModule,
+    SuppliersModule,
+    ExpensesModule,
   ],
 
   controllers: [AppController],

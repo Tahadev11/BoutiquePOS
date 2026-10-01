@@ -27,6 +27,9 @@ export class Product {
   @Prop({ type: Number, required: true, min: 0, max: 100 })
   discount: number;
 
+  @Prop({ type: Number, required: true, min: 0, default: 0 })
+  purchasePrice: number;
+
   @Prop({ type: Number, required: true, min: 0 })
   stockQuantity: number;
 }

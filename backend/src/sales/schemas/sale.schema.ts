@@ -41,6 +41,20 @@ export class SaleItem {
   })
   discount: number;
 
+    @Prop({
+    type: Number,
+    required: true,
+    min: 0,
+  })
+  purchasePrice: number;
+
+  @Prop({
+    type: Number,
+    required: true,
+    min: 0,
+  })
+  profit: number;
+
   @Prop({
     type: Number,
     required: true,
