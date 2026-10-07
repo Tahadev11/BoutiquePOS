@@ -36,7 +36,7 @@ function Products() {
 
       setMessage(
         error.response?.data?.message ||
-          'Failed to load products',
+        'Failed to load products',
       );
     } finally {
       setLoading(false);
@@ -109,7 +109,7 @@ function Products() {
 
       setMessage(
         error.response?.data?.message ||
-          'Operation failed',
+        'Operation failed',
       );
     }
   };
@@ -147,7 +147,7 @@ function Products() {
 
       setMessage(
         error.response?.data?.message ||
-          'Failed to delete dress',
+        'Failed to delete dress',
       );
     }
   };
@@ -185,7 +185,7 @@ function Products() {
 
       setMessage(
         error.response?.data?.message ||
-          'Search failed',
+        'Search failed',
       );
     }
   };
@@ -193,8 +193,15 @@ function Products() {
   return (
     <div className="products-page">
 
-      <h2>Products</h2>
+      <div className="products-header">
+        <h2>Products</h2>
 
+        <div className="total-dresses-card">
+          <span className="total-dresses-label">Total Dresses</span>
+          <span className="total-dresses-count">{products.length}</span>
+        </div>
+      </div>
+      
       {message && (
         <p className="products-message">
           {message}

@@ -82,9 +82,9 @@ function Sales() {
       setSales(
         Array.isArray(response.data)
           ? response.data.filter(
-              (transaction) =>
-                transaction.historyType === 'sale'
-            )
+            (transaction) =>
+              transaction.historyType === 'sale'
+          )
           : []
       );
     } catch (error) {
@@ -92,7 +92,7 @@ function Sales() {
 
       setMessage(
         error.response?.data?.message ||
-          'Failed to load sales history'
+        'Failed to load sales history'
       );
     } finally {
       setLoading(false);
@@ -123,7 +123,7 @@ function Sales() {
 
       setReturnExchangeMessage(
         error.response?.data?.message ||
-          'Failed to load return & exchange history'
+        'Failed to load return & exchange history'
       );
     } finally {
       setReturnExchangeLoading(false);
@@ -233,7 +233,7 @@ function Sales() {
 
       setMessage(
         error.response?.data?.message ||
-          'Failed to load sales summary'
+        'Failed to load sales summary'
       );
     } finally {
       setSummaryLoading(false);
@@ -262,7 +262,7 @@ function Sales() {
 
       setExpenseMessage(
         error.response?.data?.message ||
-          'Failed to load shop expenses'
+        'Failed to load shop expenses'
       );
     } finally {
       setExpenseLoading(false);
@@ -329,11 +329,11 @@ function Sales() {
     if (summaryPeriod === 'today') {
       return (
         expenseDate.getFullYear() ===
-          now.getFullYear() &&
+        now.getFullYear() &&
         expenseDate.getMonth() ===
-          now.getMonth() &&
+        now.getMonth() &&
         expenseDate.getDate() ===
-          now.getDate()
+        now.getDate()
       );
     }
 
@@ -491,9 +491,8 @@ function Sales() {
           transaction.exchangeItems
             ?.map(
               (item) =>
-                `${item.returnedDressName || ''} ${
-                  item.replacementDressName || ''
-                }`.toLowerCase()
+                `${item.returnedDressName || ''} ${item.replacementDressName || ''
+                  }`.toLowerCase()
             )
             .join(' ') || '';
 
@@ -598,7 +597,7 @@ function Sales() {
 
         setExpenseMessage(
           error.response?.data?.message ||
-            'Failed to save shop expense'
+          'Failed to save shop expense'
         );
       } finally {
         setExpenseLoading(false);
@@ -693,7 +692,7 @@ function Sales() {
 
         setExpenseMessage(
           error.response?.data?.message ||
-            'Failed to delete shop expense'
+          'Failed to delete shop expense'
         );
       } finally {
         setExpenseLoading(false);
@@ -901,8 +900,8 @@ function Sales() {
                 {summaryLoading
                   ? 'Loading...'
                   : `Rs. ${Number(
-                      salesSummary.netSales || 0
-                    ).toLocaleString()}`}
+                    salesSummary.netSales || 0
+                  ).toLocaleString()}`}
 
               </div>
 
@@ -921,8 +920,8 @@ function Sales() {
                 {summaryLoading
                   ? 'Loading...'
                   : `Rs. ${Number(
-                      salesSummary.netCost || 0
-                    ).toLocaleString()}`}
+                    salesSummary.netCost || 0
+                  ).toLocaleString()}`}
 
               </div>
 
@@ -941,8 +940,8 @@ function Sales() {
                 {summaryLoading
                   ? 'Loading...'
                   : `Rs. ${Number(
-                      salesSummary.netProfit || 0
-                    ).toLocaleString()}`}
+                    salesSummary.netProfit || 0
+                  ).toLocaleString()}`}
 
               </div>
 
@@ -1190,7 +1189,7 @@ function Sales() {
 
                               {Number(
                                 transaction.amount ||
-                                  0
+                                0
                               ).toLocaleString()}
                             </strong>
 
@@ -1204,7 +1203,7 @@ function Sales() {
 
                             {Number(
                               transaction.purchaseCost ||
-                                0
+                              0
                             ).toLocaleString()}
 
                           </td>
@@ -1217,7 +1216,7 @@ function Sales() {
 
                             {Number(
                               transaction.profit ||
-                                0
+                              0
                             ).toLocaleString()}
 
                           </td>
@@ -1432,16 +1431,16 @@ function Sales() {
                                   isReturn
                                     ? 'transaction-type return-type'
                                     : isExchange
-                                    ? 'transaction-type exchange-type'
-                                    : 'transaction-type'
+                                      ? 'transaction-type exchange-type'
+                                      : 'transaction-type'
                                 }
                               >
 
                                 {isReturn
                                   ? 'Return'
                                   : isExchange
-                                  ? 'Exchange'
-                                  : transaction.type}
+                                    ? 'Exchange'
+                                    : transaction.type}
 
                               </span>
 
@@ -1510,53 +1509,59 @@ function Sales() {
 
                               {/* EXCHANGE ITEMS */}
 
-                              {transaction.exchangeItems
-                                ?.map(
-                                  (
-                                    item,
-                                    index
-                                  ) => (
+                              {/* EXCHANGE ITEMS */}
 
-                                    <div
-                                      className="return-exchange-item exchange-item-row"
-                                      key={`exchange-${index}`}
-                                    >
+                              {transaction.exchangeItems?.map((item, index) => (
+                                <div
+                                  className="return-exchange-item exchange-item-row"
+                                  key={`exchange-${index}`}
+                                >
+                                  <span className="exchange-item-label">
+                                    Exchange
+                                  </span>
 
-                                      <span className="exchange-item-label">
-                                        Exchange
-                                      </span>
+                                  {/* RETURNED DRESS */}
 
-                                      <span>
+                                  <span className="exchange-dress-name">
+                                    {item.returnedDressName}
+                                    <strong>
+                                      {' '}× {item.returnedQuantity}
+                                    </strong>
+                                  </span>
 
-                                        {
-                                          item.returnedDressName
-                                        }
+                                  <span className="exchange-arrow">
+                                    →
+                                  </span>
 
-                                        {' × '}
+                                  {/* REPLACEMENT DRESSES */}
 
-                                        {
-                                          item.returnedQuantity
-                                        }
+                                  <div className="replacement-items-list">
+                                    {item.replacementItems?.map(
+                                      (replacement, replacementIndex) => (
+                                        <span
+                                          className="exchange-dress-name replacement-dress"
+                                          key={
+                                            replacement.product ||
+                                            replacementIndex
+                                          }
+                                        >
+                                          {replacement.dressName}
+                                          <strong>
+                                            {' '}× {replacement.quantity}
+                                          </strong>
 
-                                        {' → '}
-
-                                        {
-                                          item.replacementDressName
-                                        }
-
-                                        {' × '}
-
-                                        {
-                                          item.replacementQuantity
-                                        }
-
-                                      </span>
-
-                                    </div>
-
-                                  )
-                                )}
-
+                                          {replacementIndex <
+                                            item.replacementItems.length - 1 && (
+                                              <span className="replacement-plus">
+                                                {' + '}
+                                              </span>
+                                            )}
+                                        </span>
+                                      )
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
                             </td>
 
                             {/* PAYMENT */}
@@ -1577,7 +1582,7 @@ function Sales() {
 
                               {Number(
                                 transaction.returnAmount ||
-                                  0
+                                0
                               ).toLocaleString()}
 
                             </td>
@@ -1590,7 +1595,7 @@ function Sales() {
 
                               {Number(
                                 transaction.exchangeAmount ||
-                                  0
+                                0
                               ).toLocaleString()}
 
                             </td>
@@ -1605,7 +1610,7 @@ function Sales() {
 
                                 {Number(
                                   transaction.refundAmount ||
-                                    0
+                                  0
                                 ).toLocaleString()}
 
                               </span>
@@ -1622,7 +1627,7 @@ function Sales() {
 
                                 {Number(
                                   transaction.additionalPayment ||
-                                    0
+                                  0
                                 ).toLocaleString()}
 
                               </span>
@@ -1637,15 +1642,15 @@ function Sales() {
                                 className={
                                   Number(
                                     transaction.netAmount ||
-                                      0
+                                    0
                                   ) < 0
                                     ? 'negative-amount'
                                     : Number(
-                                        transaction.netAmount ||
-                                          0
-                                      ) > 0
-                                    ? 'positive-amount'
-                                    : ''
+                                      transaction.netAmount ||
+                                      0
+                                    ) > 0
+                                      ? 'positive-amount'
+                                      : ''
                                 }
                               >
 
@@ -1653,7 +1658,7 @@ function Sales() {
 
                                 {Number(
                                   transaction.netAmount ||
-                                    0
+                                  0
                                 ).toLocaleString()}
 
                               </strong>
@@ -1768,8 +1773,8 @@ function Sales() {
                   {expenseLoading
                     ? 'Saving...'
                     : editingExpenseId
-                    ? 'Update Expense'
-                    : 'Add Expense'}
+                      ? 'Update Expense'
+                      : 'Add Expense'}
                 </button>
 
                 {editingExpenseId && (
