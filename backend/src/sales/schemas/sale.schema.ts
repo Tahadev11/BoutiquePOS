@@ -20,6 +20,30 @@ export class SaleItem {
   dressName: string;
 
   @Prop({
+    type: String,
+    default: '',
+  })
+  brand: string;
+
+  @Prop({
+    type: String,
+    default: '',
+  })
+  category: string;
+
+  @Prop({
+    type: String,
+    default: '',
+  })
+  size: string;
+
+  @Prop({
+    type: String,
+    default: '',
+  })
+  color: string;
+
+  @Prop({
     type: Number,
     required: true,
     min: 1,
@@ -41,7 +65,7 @@ export class SaleItem {
   })
   discount: number;
 
-    @Prop({
+  @Prop({
     type: Number,
     required: true,
     min: 0,

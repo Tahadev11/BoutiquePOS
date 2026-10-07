@@ -9,6 +9,7 @@ import {
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Receipt from './pages/Receipt';
+import ReturnExchange from './pages/ReturnExchange';
 
 function App() {
   const [loggedIn, setLoggedIn] = useState(
@@ -19,6 +20,10 @@ function App() {
     <BrowserRouter>
 
       <Routes>
+
+        {/* =========================
+            LOGIN / DASHBOARD
+        ========================= */}
 
         <Route
           path="/"
@@ -39,9 +44,24 @@ function App() {
           }
         />
 
+
+        {/* =========================
+            RECEIPT
+        ========================= */}
+
         <Route
           path="/receipt/:id"
           element={<Receipt />}
+        />
+
+
+        {/* =========================
+            RETURN / EXCHANGE
+        ========================= */}
+
+        <Route
+          path="/return-exchange"
+          element={<ReturnExchange />}
         />
 
       </Routes>

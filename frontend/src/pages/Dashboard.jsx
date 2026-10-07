@@ -3,6 +3,7 @@ import Products from './Products';
 import POS from './POS';
 import Sales from './Sales';
 import Suppliers from './Suppliers';
+import ReturnExchange from './ReturnExchange';
 
 function Dashboard({ onLogout }) {
     const [page, setPage] = React.useState('dashboard');
@@ -25,6 +26,7 @@ function Dashboard({ onLogout }) {
 
                 <nav className="sidebar-nav">
 
+                    {/* Dashboard */}
                     <button
                         className={page === 'dashboard' ? 'active' : ''}
                         onClick={() => setPage('dashboard')}
@@ -33,6 +35,7 @@ function Dashboard({ onLogout }) {
                         Dashboard
                     </button>
 
+                    {/* Products */}
                     <button
                         className={page === 'products' ? 'active' : ''}
                         onClick={() => setPage('products')}
@@ -41,6 +44,7 @@ function Dashboard({ onLogout }) {
                         Products
                     </button>
 
+                    {/* New Sale */}
                     <button
                         className={page === 'pos' ? 'active' : ''}
                         onClick={() => setPage('pos')}
@@ -49,6 +53,7 @@ function Dashboard({ onLogout }) {
                         New Sale
                     </button>
 
+                    {/* Sales */}
                     <button
                         className={page === 'sales' ? 'active' : ''}
                         onClick={() => setPage('sales')}
@@ -57,6 +62,16 @@ function Dashboard({ onLogout }) {
                         Sales
                     </button>
 
+                    {/* Return / Exchange */}
+                    <button
+                        className={page === 'return-exchange' ? 'active' : ''}
+                        onClick={() => setPage('return-exchange')}
+                    >
+                        <span>↔</span>
+                        Return / Exchange
+                    </button>
+
+                    {/* Suppliers */}
                     <button
                         className={page === 'suppliers' ? 'active' : ''}
                         onClick={() => setPage('suppliers')}
@@ -69,6 +84,7 @@ function Dashboard({ onLogout }) {
 
                 <div className="sidebar-bottom">
 
+                    {/* Logout */}
                     <button
                         className="sidebar-logout"
                         onClick={handleLogout}
@@ -81,91 +97,183 @@ function Dashboard({ onLogout }) {
 
             </aside>
 
+
             {/* MAIN AREA */}
             <div className="dashboard-main">
 
                 <header className="dashboard-header">
 
                     <div>
+
                         <h1>
                             {page === 'dashboard' && 'Dashboard'}
                             {page === 'products' && 'Products'}
                             {page === 'pos' && 'New Sale'}
                             {page === 'sales' && 'Sales'}
+                            {page === 'return-exchange' && 'Return / Exchange'}
                             {page === 'suppliers' && 'Suppliers'}
                         </h1>
 
                         <p>
                             Welcome back to Glam By HH
                         </p>
+
                     </div>
 
                 </header>
 
+
                 <main className="dashboard-content">
+
+                    {/* =========================
+                        DASHBOARD HOME
+                    ========================= */}
 
                     {page === 'dashboard' && (
                         <>
+
                             <div className="dashboard-welcome">
+
                                 <div>
-                                    <h2>Welcome to Glam By HH ✨</h2>
+
+                                    <h2>
+                                        Welcome to Glam By HH ✨
+                                    </h2>
+
                                     <p>
                                         Manage your boutique, products,
-                                        sales, suppliers and inventory
+                                        sales, suppliers, returns,
+                                        exchanges and inventory
                                         from one place.
                                     </p>
+
                                 </div>
+
                             </div>
+
 
                             <div className="dashboard-cards">
 
+                                {/* Products */}
                                 <div
                                     className="dashboard-card"
                                     onClick={() => setPage('products')}
                                 >
-                                    <h3>Products</h3>
-                                    <p>Manage dresses and stock</p>
+                                    <h3>
+                                        Products
+                                    </h3>
+
+                                    <p>
+                                        Manage dresses and stock
+                                    </p>
                                 </div>
 
+
+                                {/* New Sale */}
                                 <div
                                     className="dashboard-card"
                                     onClick={() => setPage('pos')}
                                 >
-                                    <h3>New Sale</h3>
-                                    <p>Create a new customer sale</p>
+                                    <h3>
+                                        New Sale
+                                    </h3>
+
+                                    <p>
+                                        Create a new customer sale
+                                    </p>
                                 </div>
 
+
+                                {/* Sales */}
                                 <div
                                     className="dashboard-card"
                                     onClick={() => setPage('sales')}
                                 >
-                                    <h3>Sales</h3>
-                                    <p>View previous sales</p>
+                                    <h3>
+                                        Sales
+                                    </h3>
+
+                                    <p>
+                                        View previous sales
+                                    </p>
                                 </div>
 
+
+                                {/* Return / Exchange */}
+                                <div
+                                    className="dashboard-card"
+                                    onClick={() => setPage('return-exchange')}
+                                >
+                                    <h3>
+                                        Return / Exchange
+                                    </h3>
+
+                                    <p>
+                                        Process customer returns
+                                        and exchanges
+                                    </p>
+                                </div>
+
+
+                                {/* Suppliers */}
                                 <div
                                     className="dashboard-card"
                                     onClick={() => setPage('suppliers')}
                                 >
-                                    <h3>Suppliers</h3>
-                                    <p>Manage suppliers and balances</p>
+                                    <h3>
+                                        Suppliers
+                                    </h3>
+
+                                    <p>
+                                        Manage suppliers and balances
+                                    </p>
                                 </div>
 
                             </div>
+
                         </>
                     )}
+
+
+                    {/* =========================
+                        PRODUCTS
+                    ========================= */}
 
                     {page === 'products' && (
                         <Products />
                     )}
 
+
+                    {/* =========================
+                        POS
+                    ========================= */}
+
                     {page === 'pos' && (
                         <POS />
                     )}
 
+
+                    {/* =========================
+                        SALES
+                    ========================= */}
+
                     {page === 'sales' && (
                         <Sales />
                     )}
+
+
+                    {/* =========================
+                        RETURN / EXCHANGE
+                    ========================= */}
+
+                    {page === 'return-exchange' && (
+                        <ReturnExchange />
+                    )}
+
+
+                    {/* =========================
+                        SUPPLIERS
+                    ========================= */}
 
                     {page === 'suppliers' && (
                         <Suppliers />

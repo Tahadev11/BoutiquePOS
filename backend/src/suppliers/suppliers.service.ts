@@ -128,7 +128,10 @@ export class SuppliersService {
     }
 
     // Balance is intentionally NOT editable.
-    // It can only change through purchases/payments.
+    //
+    // Balance can only change through:
+    // - Purchases
+    // - Payments
 
     return supplier.save();
   }
@@ -147,13 +150,38 @@ export class SuppliersService {
       );
     }
 
-    // A supplier with an outstanding balance
-    // cannot be permanently deleted.
-    if (supplier.balance > 0) {
+    // --------------------------------------------
+    // Supplier must have exactly zero balance
+    // --------------------------------------------
+    //
+    // Positive balance:
+    //   We still owe supplier.
+    //
+    // Negative balance:
+    //   Supplier has our advance.
+    //
+    // Both cases mean the account is NOT settled.
+    //
+    // Therefore deletion is allowed ONLY when:
+    //
+    // balance === 0
+    // --------------------------------------------
+
+    if (supplier.balance !== 0) {
+      if (supplier.balance > 0) {
+        throw new BadRequestException(
+          'Supplier cannot be deleted while there is an outstanding payable balance. Clear the supplier balance first.',
+        );
+      }
+
       throw new BadRequestException(
-        'Supplier cannot be deleted while balance is greater than 0. Clear the supplier balance first, then delete the supplier.',
+        'Supplier cannot be deleted while an advance exists. The supplier advance must be settled first.',
       );
     }
+
+    // --------------------------------------------
+    // Check transaction history
+    // --------------------------------------------
 
     const transactionCount =
       await this.supplierTransactionModel.countDocuments({
@@ -281,23 +309,33 @@ export class SuppliersService {
 
       totalAmount += subtotal;
 
-      // Store product information as a snapshot.
-      // This preserves the historical purchase
-      // information even if the product changes later.
+      // ------------------------------------------
+      // Store product snapshot
+      // ------------------------------------------
 
       purchaseItems.push({
         product: product._id,
         dressName: product.dressName,
+        brand: product.brand ?? '',
+        category: product.category ?? '',
+        size: product.size ?? '',
+        color: product.color ?? '',
         quantity: item.quantity,
         purchasePrice: item.purchasePrice,
         subtotal,
       });
 
+      // ------------------------------------------
       // Increase stock
+      // ------------------------------------------
+
       product.stockQuantity +=
         item.quantity;
 
+      // ------------------------------------------
       // Store latest purchase price
+      // ------------------------------------------
+
       product.purchasePrice =
         item.purchasePrice;
 
@@ -307,6 +345,20 @@ export class SuppliersService {
     // --------------------------------------------
     // Update supplier balance
     // --------------------------------------------
+    //
+    // Purchase always increases the amount
+    // payable to the supplier.
+    //
+    // Example:
+    //
+    // Current balance = -10,000
+    // Purchase        = 25,000
+    //
+    // New balance     = 15,000
+    //
+    // The previous advance is automatically
+    // adjusted against the purchase.
+    // --------------------------------------------
 
     const balanceBefore =
       supplier.balance;
@@ -315,17 +367,6 @@ export class SuppliersService {
       totalAmount;
 
     await supplier.save();
-
-    // --------------------------------------------
-    // Determine transaction date
-    // --------------------------------------------
-
-    const transactionDate =
-      createPurchaseDto.transactionDate
-        ? new Date(
-            createPurchaseDto.transactionDate,
-          )
-        : new Date();
 
     // --------------------------------------------
     // Create purchase transaction
@@ -354,7 +395,15 @@ export class SuppliersService {
         note:
           createPurchaseDto.note,
 
-        transactionDate,
+        // Save selected transaction date.
+        // If frontend does not provide one,
+        // the schema/default date can be used.
+        ...(createPurchaseDto.transactionDate
+          ? {
+              transactionDate:
+                createPurchaseDto.transactionDate,
+            }
+          : {}),
 
         balanceAfter:
           supplier.balance,
@@ -403,16 +452,35 @@ export class SuppliersService {
     // --------------------------------------------
 
     if (
-      createPaymentDto.amount >
-      supplier.balance
+      !createPaymentDto.amount ||
+      createPaymentDto.amount <= 0
     ) {
       throw new BadRequestException(
-        'Payment cannot be greater than supplier balance',
+        'Payment amount must be greater than 0',
       );
     }
 
     // --------------------------------------------
     // Update supplier balance
+    // --------------------------------------------
+    //
+    // Positive balance:
+    //   Amount payable to supplier.
+    //
+    // Zero:
+    //   Account settled.
+    //
+    // Negative balance:
+    //   Advance paid to supplier.
+    //
+    // Example:
+    //
+    // Balance = 50,000
+    // Payment  = 60,000
+    //
+    // New balance = -10,000
+    //
+    // The Rs. 10,000 becomes an advance.
     // --------------------------------------------
 
     const balanceBefore =
@@ -422,17 +490,6 @@ export class SuppliersService {
       createPaymentDto.amount;
 
     await supplier.save();
-
-    // --------------------------------------------
-    // Determine transaction date
-    // --------------------------------------------
-
-    const transactionDate =
-      createPaymentDto.transactionDate
-        ? new Date(
-            createPaymentDto.transactionDate,
-          )
-        : new Date();
 
     // --------------------------------------------
     // Create payment transaction
@@ -461,13 +518,23 @@ export class SuppliersService {
         note:
           createPaymentDto.note,
 
-        transactionDate,
+        // Save selected transaction date.
+        ...(createPaymentDto.transactionDate
+          ? {
+              transactionDate:
+                createPaymentDto.transactionDate,
+            }
+          : {}),
 
         balanceAfter:
           supplier.balance,
       });
 
     await transaction.save();
+
+    // --------------------------------------------
+    // Return response
+    // --------------------------------------------
 
     return {
       message:
@@ -503,10 +570,14 @@ export class SuppliersService {
     // Get supplier transactions
     // --------------------------------------------
     //
-    // New transactions have transactionDate.
+    // Transactions are sorted by:
     //
-    // Old transactions may not have transactionDate,
-    // so createdAt is also used as a fallback.
+    // 1. transactionDate
+    // 2. createdAt
+    //
+    // Older transactions without transactionDate
+    // will still use createdAt as fallback ordering.
+    // --------------------------------------------
 
     const transactions =
       await this.supplierTransactionModel

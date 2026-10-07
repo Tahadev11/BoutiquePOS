@@ -3,35 +3,72 @@ import api from '../api/api';
 
 function Sales() {
   const [sales, setSales] = useState([]);
+  const [returnExchanges, setReturnExchanges] = useState([]);
   const [expenses, setExpenses] = useState([]);
 
+  const [salesSummary, setSalesSummary] = useState({
+    grossSales: 0,
+    grossCost: 0,
+    grossProfit: 0,
+    returnExchangeSalesAdjustment: 0,
+    returnExchangeCostAdjustment: 0,
+    returnExchangeProfitAdjustment: 0,
+    netSales: 0,
+    netCost: 0,
+    netProfit: 0,
+    salesCount: 0,
+    returnExchangeCount: 0,
+  });
+
+  const [summaryLoading, setSummaryLoading] =
+    useState(false);
+
   const [search, setSearch] = useState('');
+  const [returnExchangeSearch, setReturnExchangeSearch] =
+    useState('');
+
   const [loading, setLoading] = useState(false);
-  const [expenseLoading, setExpenseLoading] = useState(false);
+  const [returnExchangeLoading, setReturnExchangeLoading] =
+    useState(false);
+
+  const [expenseLoading, setExpenseLoading] =
+    useState(false);
 
   const [message, setMessage] = useState('');
-  const [expenseMessage, setExpenseMessage] = useState('');
+  const [returnExchangeMessage, setReturnExchangeMessage] =
+    useState('');
+
+  const [expenseMessage, setExpenseMessage] =
+    useState('');
 
   // Summary period
-  const [summaryPeriod, setSummaryPeriod] = useState('today');
+  const [summaryPeriod, setSummaryPeriod] =
+    useState('today');
 
-  // Sales / Expense section
-  const [activeSection, setActiveSection] = useState('sales');
+  // Sales / Returns / Expenses section
+  const [activeSection, setActiveSection] =
+    useState('sales');
 
   // Expense form
-  const [expenseAmount, setExpenseAmount] = useState('');
+  const [expenseAmount, setExpenseAmount] =
+    useState('');
 
-  const [expenseDate, setExpenseDate] = useState(
-    new Date().toISOString().split('T')[0]
-  );
+  const [expenseDate, setExpenseDate] =
+    useState(
+      new Date()
+        .toISOString()
+        .split('T')[0]
+    );
 
-  const [editingExpenseId, setEditingExpenseId] = useState(null);
+  const [editingExpenseId, setEditingExpenseId] =
+    useState(null);
 
   // Delete expense modal
-  const [deleteExpenseId, setDeleteExpenseId] = useState(null);
+  const [deleteExpenseId, setDeleteExpenseId] =
+    useState(null);
 
   // ==========================================
-  // FETCH SALES
+  // FETCH SALES HISTORY
   // ==========================================
 
   const fetchSales = async () => {
@@ -39,18 +76,167 @@ function Sales() {
       setLoading(true);
       setMessage('');
 
-      const response = await api.get('/sales');
+      const response =
+        await api.get('/sales/history/all');
 
-      setSales(response.data);
+      setSales(
+        Array.isArray(response.data)
+          ? response.data.filter(
+              (transaction) =>
+                transaction.historyType === 'sale'
+            )
+          : []
+      );
     } catch (error) {
       console.error(error);
 
       setMessage(
         error.response?.data?.message ||
-          'Failed to load sales'
+          'Failed to load sales history'
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  // ==========================================
+  // FETCH RETURN & EXCHANGE HISTORY
+  // ==========================================
+
+  const fetchReturnExchanges = async () => {
+    try {
+      setReturnExchangeLoading(true);
+      setReturnExchangeMessage('');
+
+      const response =
+        await api.get(
+          '/sales/return-exchanges/all'
+        );
+
+      setReturnExchanges(
+        Array.isArray(response.data)
+          ? response.data
+          : []
+      );
+    } catch (error) {
+      console.error(error);
+
+      setReturnExchangeMessage(
+        error.response?.data?.message ||
+          'Failed to load return & exchange history'
+      );
+    } finally {
+      setReturnExchangeLoading(false);
+    }
+  };
+
+  // ==========================================
+  // FETCH SALES SUMMARY
+  // ==========================================
+
+  const fetchSalesSummary = async () => {
+    try {
+      setSummaryLoading(true);
+
+      let startDate = null;
+      let endDate = new Date();
+
+      const now = new Date();
+
+      // ========================================
+      // TODAY
+      // ========================================
+
+      if (summaryPeriod === 'today') {
+        startDate = new Date(now);
+
+        startDate.setHours(
+          0,
+          0,
+          0,
+          0
+        );
+      }
+
+      // ========================================
+      // LAST 7 DAYS
+      // ========================================
+
+      if (summaryPeriod === '7days') {
+        startDate = new Date(now);
+
+        startDate.setDate(
+          now.getDate() - 6
+        );
+
+        startDate.setHours(
+          0,
+          0,
+          0,
+          0
+        );
+      }
+
+      // ========================================
+      // LAST 30 DAYS
+      // ========================================
+
+      if (summaryPeriod === '30days') {
+        startDate = new Date(now);
+
+        startDate.setDate(
+          now.getDate() - 29
+        );
+
+        startDate.setHours(
+          0,
+          0,
+          0,
+          0
+        );
+      }
+
+      // ========================================
+      // OVERALL
+      // ========================================
+
+      if (summaryPeriod === 'overall') {
+        startDate = null;
+        endDate = null;
+      }
+
+      const params = {};
+
+      if (startDate) {
+        params.startDate =
+          startDate.toISOString();
+      }
+
+      if (endDate) {
+        params.endDate =
+          endDate.toISOString();
+      }
+
+      const response =
+        await api.get(
+          '/sales/reports/summary',
+          {
+            params,
+          }
+        );
+
+      setSalesSummary(
+        response.data || {}
+      );
+    } catch (error) {
+      console.error(error);
+
+      setMessage(
+        error.response?.data?.message ||
+          'Failed to load sales summary'
+      );
+    } finally {
+      setSummaryLoading(false);
     }
   };
 
@@ -63,7 +249,8 @@ function Sales() {
       setExpenseLoading(true);
       setExpenseMessage('');
 
-      const response = await api.get('/expenses');
+      const response =
+        await api.get('/expenses');
 
       setExpenses(
         Array.isArray(response.data)
@@ -88,138 +275,32 @@ function Sales() {
 
   useEffect(() => {
     fetchSales();
+    fetchReturnExchanges();
     fetchExpenses();
   }, []);
+
+  useEffect(() => {
+    fetchSalesSummary();
+  }, [summaryPeriod]);
 
   // ==========================================
   // FORMAT DATE
   // ==========================================
 
   const formatDate = (date) => {
+    if (!date) {
+      return '—';
+    }
+
     return new Date(date).toLocaleString();
   };
 
   const formatExpenseDate = (date) => {
+    if (!date) {
+      return '—';
+    }
+
     return new Date(date).toLocaleDateString();
-  };
-
-  // ==========================================
-  // CALCULATE PURCHASE COST
-  // ==========================================
-
-  const calculatePurchaseCost = (sale) => {
-    return (
-      sale.items?.reduce((total, item) => {
-        const purchasePrice =
-          Number(item.purchasePrice) || 0;
-
-        const quantity =
-          Number(item.quantity) || 0;
-
-        return (
-          total +
-          purchasePrice * quantity
-        );
-      }, 0) || 0
-    );
-  };
-
-  // ==========================================
-  // CALCULATE PROFIT
-  // ==========================================
-
-  const calculateProfit = (sale) => {
-    return (
-      sale.items?.reduce((total, item) => {
-        const profit =
-          Number(item.profit) || 0;
-
-        return total + profit;
-      }, 0) || 0
-    );
-  };
-
-  // ==========================================
-  // CHECK SALE PERIOD
-  // ==========================================
-
-  const isSaleInPeriod = (sale) => {
-    if (!sale.createdAt) {
-      return false;
-    }
-
-    // Overall = all sales
-    if (summaryPeriod === 'overall') {
-      return true;
-    }
-
-    const saleDate = new Date(sale.createdAt);
-    const now = new Date();
-
-    // ========================================
-    // TODAY
-    // ========================================
-
-    if (summaryPeriod === 'today') {
-      return (
-        saleDate.getFullYear() ===
-          now.getFullYear() &&
-        saleDate.getMonth() ===
-          now.getMonth() &&
-        saleDate.getDate() ===
-          now.getDate()
-      );
-    }
-
-    // ========================================
-    // LAST 7 DAYS
-    // ========================================
-
-    if (summaryPeriod === '7days') {
-      const startDate = new Date(now);
-
-      startDate.setDate(
-        now.getDate() - 6
-      );
-
-      startDate.setHours(
-        0,
-        0,
-        0,
-        0
-      );
-
-      return (
-        saleDate >= startDate &&
-        saleDate <= now
-      );
-    }
-
-    // ========================================
-    // LAST 30 DAYS
-    // ========================================
-
-    if (summaryPeriod === '30days') {
-      const startDate = new Date(now);
-
-      startDate.setDate(
-        now.getDate() - 29
-      );
-
-      startDate.setHours(
-        0,
-        0,
-        0,
-        0
-      );
-
-      return (
-        saleDate >= startDate &&
-        saleDate <= now
-      );
-    }
-
-    return false;
   };
 
   // ==========================================
@@ -236,9 +317,8 @@ function Sales() {
       return true;
     }
 
-    const expenseDate = new Date(
-      expense.expenseDate
-    );
+    const expenseDate =
+      new Date(expense.expenseDate);
 
     const now = new Date();
 
@@ -262,7 +342,8 @@ function Sales() {
     // ========================================
 
     if (summaryPeriod === '7days') {
-      const startDate = new Date(now);
+      const startDate =
+        new Date(now);
 
       startDate.setDate(
         now.getDate() - 6
@@ -286,7 +367,8 @@ function Sales() {
     // ========================================
 
     if (summaryPeriod === '30days') {
-      const startDate = new Date(now);
+      const startDate =
+        new Date(now);
 
       startDate.setDate(
         now.getDate() - 29
@@ -309,14 +391,6 @@ function Sales() {
   };
 
   // ==========================================
-  // SALES FOR SUMMARY
-  // ==========================================
-
-  const summarySales = sales.filter(
-    isSaleInPeriod
-  );
-
-  // ==========================================
   // EXPENSES FOR SUMMARY
   // ==========================================
 
@@ -325,171 +399,257 @@ function Sales() {
       isExpenseInPeriod
     );
 
-  // ==========================================
-  // TOTAL SALES
-  // ==========================================
-
-  const totalSales = summarySales.reduce(
-    (total, sale) => {
-      return (
-        total +
-        (Number(sale.totalAmount) || 0)
-      );
-    },
-    0,
-  );
-
-  // ==========================================
-  // TOTAL PURCHASE COST
-  // ==========================================
-
-  const totalPurchaseCost =
-    summarySales.reduce(
-      (total, sale) => {
-        return (
-          total +
-          calculatePurchaseCost(sale)
-        );
-      },
-      0,
-    );
-
-  // ==========================================
-  // TOTAL PROFIT
-  // ==========================================
-
-  const totalProfit =
-    summarySales.reduce(
-      (total, sale) => {
-        return (
-          total +
-          calculateProfit(sale)
-        );
-      },
-      0,
-    );
-
-  // ==========================================
-  // TOTAL SHOP EXPENSE
-  // ==========================================
-
   const totalExpenses =
     summaryExpenses.reduce(
-      (total, expense) => {
-        return (
-          total +
-          (Number(expense.amount) || 0)
-        );
-      },
-      0,
+      (sum, expense) =>
+        sum +
+        Number(expense.amount || 0),
+      0
     );
 
-  // ==========================================
-  // NET AMOUNT
-  // ==========================================
-
   const netAmount =
-    totalProfit - totalExpenses;
+    Number(
+      salesSummary.netProfit || 0
+    ) - totalExpenses;
 
   // ==========================================
-  // SEARCH / SALES HISTORY
+  // SALES SEARCH
   // ==========================================
 
-  const filteredSales = sales.filter(
-    (sale) => {
+  const filteredSales =
+    sales.filter((transaction) => {
       const searchText =
-        search.toLowerCase().trim();
+        search
+          .toLowerCase()
+          .trim();
 
       if (!searchText) {
         return true;
       }
 
-      const invoiceNumber =
-        sale.invoiceNumber?.toLowerCase() ||
-        '';
+      const documentNumber =
+        transaction.documentNumber
+          ?.toLowerCase() || '';
 
-      const dressNames =
-        sale.items
+      const itemsText =
+        transaction.items
           ?.map(
             (item) =>
-              item.dressName?.toLowerCase() ||
-              '',
+              item.dressName
+                ?.toLowerCase() || ''
           )
           .join(' ') || '';
 
       return (
-        invoiceNumber.includes(
+        documentNumber.includes(
           searchText
         ) ||
-        dressNames.includes(
+        itemsText.includes(
           searchText
         )
       );
-    },
-  );
+    });
+
+  // ==========================================
+  // RETURN / EXCHANGE SEARCH
+  // ==========================================
+
+  const filteredReturnExchanges =
+    returnExchanges.filter(
+      (transaction) => {
+        const searchText =
+          returnExchangeSearch
+            .toLowerCase()
+            .trim();
+
+        if (!searchText) {
+          return true;
+        }
+
+        const documentNumber =
+          transaction.documentNumber
+            ?.toLowerCase() || '';
+
+        const originalInvoiceNumber =
+          transaction.originalInvoiceNumber
+            ?.toLowerCase() || '';
+
+        const type =
+          transaction.type
+            ?.toLowerCase() || '';
+
+        const returnedItemsText =
+          transaction.returnedItems
+            ?.map(
+              (item) =>
+                item.dressName
+                  ?.toLowerCase() || ''
+            )
+            .join(' ') || '';
+
+        const exchangeItemsText =
+          transaction.exchangeItems
+            ?.map(
+              (item) =>
+                `${item.returnedDressName || ''} ${
+                  item.replacementDressName || ''
+                }`.toLowerCase()
+            )
+            .join(' ') || '';
+
+        return (
+          documentNumber.includes(
+            searchText
+          ) ||
+          originalInvoiceNumber.includes(
+            searchText
+          ) ||
+          type.includes(
+            searchText
+          ) ||
+          returnedItemsText.includes(
+            searchText
+          ) ||
+          exchangeItemsText.includes(
+            searchText
+          )
+        );
+      }
+    );
 
   // ==========================================
   // ADD / UPDATE EXPENSE
   // ==========================================
 
-  const handleExpenseSubmit = async (
-    event
-  ) => {
-    event.preventDefault();
+  const handleExpenseSubmit =
+    async (event) => {
+      event.preventDefault();
 
-    setExpenseMessage('');
+      setExpenseMessage('');
 
-    if (!expenseAmount) {
-      setExpenseMessage(
-        'Please enter expense amount'
-      );
-      return;
-    }
-
-    if (
-      Number(expenseAmount) <= 0
-    ) {
-      setExpenseMessage(
-        'Expense amount must be greater than 0'
-      );
-      return;
-    }
-
-    if (!expenseDate) {
-      setExpenseMessage(
-        'Please select expense date'
-      );
-      return;
-    }
-
-    try {
-      setExpenseLoading(true);
-
-      const expenseData = {
-        amount: Number(expenseAmount),
-        expenseDate: expenseDate,
-      };
-
-      if (editingExpenseId) {
-        await api.patch(
-          `/expenses/${editingExpenseId}`,
-          expenseData
-        );
-
+      if (!expenseAmount) {
         setExpenseMessage(
-          'Shop expense updated successfully'
+          'Please enter expense amount'
         );
-      } else {
-        await api.post(
-          '/expenses',
-          expenseData
-        );
-
-        setExpenseMessage(
-          'Shop expense added successfully'
-        );
+        return;
       }
 
+      if (
+        Number(expenseAmount) <= 0
+      ) {
+        setExpenseMessage(
+          'Expense amount must be greater than 0'
+        );
+        return;
+      }
+
+      if (!expenseDate) {
+        setExpenseMessage(
+          'Please select expense date'
+        );
+        return;
+      }
+
+      try {
+        setExpenseLoading(true);
+
+        const expenseData = {
+          amount:
+            Number(expenseAmount),
+          expenseDate:
+            expenseDate,
+        };
+
+        if (editingExpenseId) {
+          await api.patch(
+            `/expenses/${editingExpenseId}`,
+            expenseData
+          );
+
+          setExpenseMessage(
+            'Shop expense updated successfully'
+          );
+        } else {
+          await api.post(
+            '/expenses',
+            expenseData
+          );
+
+          setExpenseMessage(
+            'Shop expense added successfully'
+          );
+        }
+
+        setExpenseAmount('');
+
+        setExpenseDate(
+          new Date()
+            .toISOString()
+            .split('T')[0]
+        );
+
+        setEditingExpenseId(null);
+
+        await fetchExpenses();
+
+        await fetchSalesSummary();
+      } catch (error) {
+        console.error(error);
+
+        setExpenseMessage(
+          error.response?.data?.message ||
+            'Failed to save shop expense'
+        );
+      } finally {
+        setExpenseLoading(false);
+      }
+    };
+
+  // ==========================================
+  // EDIT EXPENSE
+  // ==========================================
+
+  const handleEditExpense =
+    (expense) => {
+      setEditingExpenseId(
+        expense._id
+      );
+
+      setExpenseAmount(
+        expense.amount
+      );
+
+      const date =
+        new Date(
+          expense.expenseDate
+        );
+
+      const formattedDate =
+        `${date.getFullYear()}-${String(
+          date.getMonth() + 1
+        ).padStart(2, '0')}-${String(
+          date.getDate()
+        ).padStart(2, '0')}`;
+
+      setExpenseDate(
+        formattedDate
+      );
+
+      setExpenseMessage('');
+
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth',
+      });
+    };
+
+  // ==========================================
+  // CANCEL EDIT
+  // ==========================================
+
+  const handleCancelEdit =
+    () => {
+      setEditingExpenseId(null);
       setExpenseAmount('');
 
       setExpenseDate(
@@ -498,110 +658,57 @@ function Sales() {
           .split('T')[0]
       );
 
-      setEditingExpenseId(null);
-
-      await fetchExpenses();
-    } catch (error) {
-      console.error(error);
-
-      setExpenseMessage(
-        error.response?.data?.message ||
-          'Failed to save shop expense'
-      );
-    } finally {
-      setExpenseLoading(false);
-    }
-  };
-
-  // ==========================================
-  // EDIT EXPENSE
-  // ==========================================
-
-  const handleEditExpense = (
-    expense
-  ) => {
-    setEditingExpenseId(
-      expense._id
-    );
-
-    setExpenseAmount(
-      expense.amount
-    );
-
-    const date =
-      new Date(expense.expenseDate);
-
-    const formattedDate =
-      `${date.getFullYear()}-${String(
-        date.getMonth() + 1
-      ).padStart(2, '0')}-${String(
-        date.getDate()
-      ).padStart(2, '0')}`;
-
-    setExpenseDate(
-      formattedDate
-    );
-
-    setExpenseMessage('');
-
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
-    });
-  };
-
-  // ==========================================
-  // CANCEL EDIT
-  // ==========================================
-
-  const handleCancelEdit = () => {
-    setEditingExpenseId(null);
-    setExpenseAmount('');
-
-    setExpenseDate(
-      new Date()
-        .toISOString()
-        .split('T')[0]
-    );
-
-    setExpenseMessage('');
-  };
+      setExpenseMessage('');
+    };
 
   // ==========================================
   // DELETE EXPENSE
   // ==========================================
 
-  const handleDeleteExpense = async () => {
-    if (!deleteExpenseId) {
-      return;
-    }
+  const handleDeleteExpense =
+    async () => {
+      if (!deleteExpenseId) {
+        return;
+      }
 
-    try {
-      setExpenseLoading(true);
-      setExpenseMessage('');
+      try {
+        setExpenseLoading(true);
+        setExpenseMessage('');
 
-      await api.delete(
-        `/expenses/${deleteExpenseId}`
-      );
+        await api.delete(
+          `/expenses/${deleteExpenseId}`
+        );
 
-      setExpenseMessage(
-        'Shop expense deleted successfully'
-      );
+        setExpenseMessage(
+          'Shop expense deleted successfully'
+        );
 
-      // Close custom modal
-      setDeleteExpenseId(null);
+        setDeleteExpenseId(null);
 
-      await fetchExpenses();
-    } catch (error) {
-      console.error(error);
+        await fetchExpenses();
 
-      setExpenseMessage(
-        error.response?.data?.message ||
-          'Failed to delete shop expense'
-      );
-    } finally {
-      setExpenseLoading(false);
-    }
+        await fetchSalesSummary();
+      } catch (error) {
+        console.error(error);
+
+        setExpenseMessage(
+          error.response?.data?.message ||
+            'Failed to delete shop expense'
+        );
+      } finally {
+        setExpenseLoading(false);
+      }
+    };
+
+  // ==========================================
+  // REFRESH EVERYTHING
+  // ==========================================
+
+  const handleRefresh = () => {
+    fetchSales();
+    fetchReturnExchanges();
+    fetchExpenses();
+    fetchSalesSummary();
   };
 
   return (
@@ -616,26 +723,24 @@ function Sales() {
         <div>
 
           <h2>
-            Sales History
+            Sales & Financial History
           </h2>
 
           <p>
-            View sales and manage shop expenses
+            View sales, returns, exchanges
+            and shop expenses
           </p>
 
         </div>
 
         <button
-          onClick={() => {
-            fetchSales();
-            fetchExpenses();
-          }}
+          type="button"
+          onClick={handleRefresh}
         >
           Refresh
         </button>
 
       </div>
-
 
       {/* ====================================
           SECTION BUTTONS
@@ -644,6 +749,7 @@ function Sales() {
       <div className="sales-section-buttons">
 
         <button
+          type="button"
           className={
             activeSection === 'sales'
               ? 'active'
@@ -657,6 +763,21 @@ function Sales() {
         </button>
 
         <button
+          type="button"
+          className={
+            activeSection === 'returns'
+              ? 'active'
+              : ''
+          }
+          onClick={() =>
+            setActiveSection('returns')
+          }
+        >
+          Return & Exchange
+        </button>
+
+        <button
+          type="button"
           className={
             activeSection === 'expenses'
               ? 'active'
@@ -671,9 +792,8 @@ function Sales() {
 
       </div>
 
-
       {/* ====================================
-          PROFIT SUMMARY
+          SALES SUMMARY
       ==================================== */}
 
       <div className="profit-summary-section">
@@ -687,15 +807,14 @@ function Sales() {
             </h3>
 
             <p>
-              View sales performance
-              and shop expenses
-              for a selected period
+              View actual sales performance
+              and shop expenses for a
+              selected period
             </p>
 
           </div>
 
         </div>
-
 
         {/* ==================================
             PERIOD BUTTONS
@@ -704,63 +823,56 @@ function Sales() {
         <div className="summary-period-buttons">
 
           <button
+            type="button"
             className={
               summaryPeriod === 'today'
                 ? 'active'
                 : ''
             }
             onClick={() =>
-              setSummaryPeriod(
-                'today'
-              )
+              setSummaryPeriod('today')
             }
           >
             Today
           </button>
 
-
           <button
+            type="button"
             className={
               summaryPeriod === '7days'
                 ? 'active'
                 : ''
             }
             onClick={() =>
-              setSummaryPeriod(
-                '7days'
-              )
+              setSummaryPeriod('7days')
             }
           >
             Last 7 Days
           </button>
 
-
           <button
+            type="button"
             className={
               summaryPeriod === '30days'
                 ? 'active'
                 : ''
             }
             onClick={() =>
-              setSummaryPeriod(
-                '30days'
-              )
+              setSummaryPeriod('30days')
             }
           >
             Last 30 Days
           </button>
 
-
           <button
+            type="button"
             className={
               summaryPeriod === 'overall'
                 ? 'active'
                 : ''
             }
             onClick={() =>
-              setSummaryPeriod(
-                'overall'
-              )
+              setSummaryPeriod('overall')
             }
           >
             Overall
@@ -768,84 +880,111 @@ function Sales() {
 
         </div>
 
-
         {/* ==================================
             SUMMARY CARDS
         ================================== */}
 
         <div className="sales-summary">
 
-          {/* SALES */}
+          <div className="sales-summary-cards">
 
-          <div className="sales-summary-card">
+            {/* ACTUAL SALES */}
 
-            <span>
-              Sales
-            </span>
+            <div className="summary-card">
 
-            <strong>
-              Rs. {totalSales}
-            </strong>
+              <div className="summary-card-title">
+                Actual Sales
+              </div>
 
-          </div>
+              <div className="summary-card-value">
 
+                {summaryLoading
+                  ? 'Loading...'
+                  : `Rs. ${Number(
+                      salesSummary.netSales || 0
+                    ).toLocaleString()}`}
 
-          {/* PURCHASE COST */}
+              </div>
 
-          <div className="sales-summary-card">
+            </div>
 
-            <span>
-              Purchase Cost
-            </span>
+            {/* ACTUAL PURCHASE COST */}
 
-            <strong>
-              Rs. {totalPurchaseCost}
-            </strong>
+            <div className="summary-card">
 
-          </div>
+              <div className="summary-card-title">
+                Actual Purchase Cost
+              </div>
 
+              <div className="summary-card-value">
 
-          {/* PROFIT */}
+                {summaryLoading
+                  ? 'Loading...'
+                  : `Rs. ${Number(
+                      salesSummary.netCost || 0
+                    ).toLocaleString()}`}
 
-          <div className="sales-summary-card">
+              </div>
 
-            <span>
-              Profit
-            </span>
+            </div>
 
-            <strong>
-              Rs. {totalProfit}
-            </strong>
+            {/* ACTUAL PROFIT */}
 
-          </div>
+            <div className="summary-card">
 
+              <div className="summary-card-title">
+                Actual Profit
+              </div>
 
-          {/* SHOP EXPENSE */}
+              <div className="summary-card-value">
 
-          <div className="sales-summary-card">
+                {summaryLoading
+                  ? 'Loading...'
+                  : `Rs. ${Number(
+                      salesSummary.netProfit || 0
+                    ).toLocaleString()}`}
 
-            <span>
-              Shop Expense
-            </span>
+              </div>
 
-            <strong>
-              Rs. {totalExpenses}
-            </strong>
+            </div>
 
-          </div>
+            {/* SHOP EXPENSE */}
 
+            <div className="summary-card">
 
-          {/* NET AMOUNT */}
+              <div className="summary-card-title">
+                Shop Expense
+              </div>
 
-          <div className="sales-summary-card">
+              <div className="summary-card-value">
 
-            <span>
-              Net Amount
-            </span>
+                Rs.{' '}
+                {Number(
+                  totalExpenses || 0
+                ).toLocaleString()}
 
-            <strong>
-              Rs. {netAmount}
-            </strong>
+              </div>
+
+            </div>
+
+            {/* NET AMOUNT */}
+
+            <div className="summary-card">
+
+              <div className="summary-card-title">
+                Net Amount
+              </div>
+
+              <div className="summary-card-value">
+
+                Rs.{' '}
+                {Number(
+                  netAmount || 0
+                ).toLocaleString()}
+
+              </div>
+
+            </div>
 
           </div>
 
@@ -853,14 +992,13 @@ function Sales() {
 
       </div>
 
-
       {/* ====================================
           SALES HISTORY SECTION
       ==================================== */}
 
       {activeSection === 'sales' && (
 
-        <>
+        <div className="sales-history-section">
 
           {/* SEARCH */}
 
@@ -868,7 +1006,7 @@ function Sales() {
 
             <input
               type="text"
-              placeholder="Search invoice number or dress name..."
+              placeholder="Search invoice or dress name..."
               value={search}
               onChange={(e) =>
                 setSearch(e.target.value)
@@ -890,7 +1028,6 @@ function Sales() {
 
           </div>
 
-
           {/* MESSAGE */}
 
           {message && (
@@ -901,13 +1038,12 @@ function Sales() {
 
           )}
 
-
           {/* SALES HISTORY */}
 
           {loading ? (
 
-            <p>
-              Loading sales...
+            <p className="sales-loading">
+              Loading sales history...
             </p>
 
           ) : (
@@ -952,7 +1088,6 @@ function Sales() {
 
                 </thead>
 
-
                 <tbody>
 
                   {filteredSales.length === 0 ? (
@@ -972,83 +1107,563 @@ function Sales() {
                   ) : (
 
                     filteredSales.map(
-                      (sale) => {
+                      (transaction) => (
 
-                        const purchaseCost =
-                          calculatePurchaseCost(
-                            sale
-                          );
+                        <tr
+                          key={
+                            transaction._id
+                          }
+                        >
 
-                        const profit =
-                          calculateProfit(
-                            sale
-                          );
+                          {/* INVOICE */}
 
-                        return (
+                          <td>
 
-                          <tr
-                            key={sale._id}
-                          >
+                            <strong>
+                              {
+                                transaction.documentNumber
+                              }
+                            </strong>
 
-                            <td>
-                              {sale.invoiceNumber}
-                            </td>
+                          </td>
 
+                          {/* DATE */}
 
-                            <td>
-                              {formatDate(
-                                sale.createdAt
-                              )}
-                            </td>
+                          <td>
 
+                            {formatDate(
+                              transaction.createdAt
+                            )}
 
-                            <td>
+                          </td>
 
-                              {sale.items.map(
+                          {/* ITEMS */}
+
+                          <td>
+
+                            {transaction.items
+                              ?.map(
                                 (
                                   item,
                                   index
                                 ) => (
 
                                   <div
+                                    className="history-item"
                                     key={index}
                                   >
-                                    {item.dressName}
-                                    {' × '}
-                                    {item.quantity}
+
+                                    <span>
+                                      {item.dressName}
+                                    </span>
+
+                                    <span>
+                                      ×{' '}
+                                      {
+                                        item.quantity
+                                      }
+                                    </span>
+
                                   </div>
 
                                 )
                               )}
 
-                            </td>
+                          </td>
 
+                          {/* PAYMENT */}
 
-                            <td>
-                              {sale.paymentMethod}
-                            </td>
+                          <td>
 
+                            {transaction
+                              .paymentMethod ||
+                              '—'}
 
-                            <td>
+                          </td>
+
+                          {/* TOTAL */}
+
+                          <td>
+
+                            <strong>
                               Rs.{' '}
-                              {sale.totalAmount}
-                            </td>
 
+                              {Number(
+                                transaction.amount ||
+                                  0
+                              ).toLocaleString()}
+                            </strong>
+
+                          </td>
+
+                          {/* PURCHASE COST */}
+
+                          <td>
+
+                            Rs.{' '}
+
+                            {Number(
+                              transaction.purchaseCost ||
+                                0
+                            ).toLocaleString()}
+
+                          </td>
+
+                          {/* PROFIT */}
+
+                          <td>
+
+                            Rs.{' '}
+
+                            {Number(
+                              transaction.profit ||
+                                0
+                            ).toLocaleString()}
+
+                          </td>
+
+                        </tr>
+
+                      )
+                    )
+
+                  )}
+
+                </tbody>
+
+              </table>
+
+            </div>
+
+          )}
+
+        </div>
+
+      )}
+
+      {/* ====================================
+          RETURN & EXCHANGE HISTORY
+      ==================================== */}
+
+      {activeSection === 'returns' && (
+
+        <div className="return-exchange-history-section">
+
+          {/* HEADER */}
+
+          <div className="return-exchange-history-header">
+
+            <div>
+
+              <h3>
+                Return & Exchange History
+              </h3>
+
+              <p>
+                View all returned and exchanged
+                transactions
+              </p>
+
+            </div>
+
+          </div>
+
+          {/* SEARCH */}
+
+          <div className="sales-search">
+
+            <input
+              type="text"
+              placeholder="Search return, exchange, invoice or dress name..."
+              value={returnExchangeSearch}
+              onChange={(e) =>
+                setReturnExchangeSearch(
+                  e.target.value
+                )
+              }
+            />
+
+            {returnExchangeSearch && (
+
+              <button
+                type="button"
+                onClick={() =>
+                  setReturnExchangeSearch('')
+                }
+              >
+                Clear
+              </button>
+
+            )}
+
+          </div>
+
+          {/* MESSAGE */}
+
+          {returnExchangeMessage && (
+
+            <p className="sales-message">
+              {returnExchangeMessage}
+            </p>
+
+          )}
+
+          {/* TABLE */}
+
+          {returnExchangeLoading ? (
+
+            <p className="sales-loading">
+              Loading return & exchange history...
+            </p>
+
+          ) : (
+
+            <div className="sales-table-container">
+
+              <table className="sales-table return-exchange-table">
+
+                <thead>
+
+                  <tr>
+
+                    <th>
+                      Document
+                    </th>
+
+                    <th>
+                      Type
+                    </th>
+
+                    <th>
+                      Original Invoice
+                    </th>
+
+                    <th>
+                      Date
+                    </th>
+
+                    <th>
+                      Items
+                    </th>
+
+                    <th>
+                      Payment
+                    </th>
+
+                    <th>
+                      Return Amount
+                    </th>
+
+                    <th>
+                      Exchange Amount
+                    </th>
+
+                    <th>
+                      Refund
+                    </th>
+
+                    <th>
+                      Additional Payment
+                    </th>
+
+                    <th>
+                      Net Amount
+                    </th>
+
+                  </tr>
+
+                </thead>
+
+                <tbody>
+
+                  {filteredReturnExchanges.length === 0 ? (
+
+                    <tr>
+
+                      <td colSpan="11">
+
+                        {returnExchangeSearch
+                          ? 'No matching return or exchange found'
+                          : 'No returns or exchanges found'}
+
+                      </td>
+
+                    </tr>
+
+                  ) : (
+
+                    filteredReturnExchanges.map(
+                      (transaction) => {
+
+                        const isReturn =
+                          transaction.type ===
+                          'return';
+
+                        const isExchange =
+                          transaction.type ===
+                          'exchange';
+
+                        return (
+
+                          <tr
+                            key={
+                              transaction._id
+                            }
+                          >
+
+                            {/* DOCUMENT */}
 
                             <td>
-                              Rs.{' '}
-                              {purchaseCost}
+
+                              <strong>
+                                {
+                                  transaction.documentNumber
+                                }
+                              </strong>
+
                             </td>
 
+                            {/* TYPE */}
 
                             <td>
+
+                              <span
+                                className={
+                                  isReturn
+                                    ? 'transaction-type return-type'
+                                    : isExchange
+                                    ? 'transaction-type exchange-type'
+                                    : 'transaction-type'
+                                }
+                              >
+
+                                {isReturn
+                                  ? 'Return'
+                                  : isExchange
+                                  ? 'Exchange'
+                                  : transaction.type}
+
+                              </span>
+
+                            </td>
+
+                            {/* ORIGINAL INVOICE */}
+
+                            <td>
+
+                              <strong>
+                                {
+                                  transaction.originalInvoiceNumber ||
+                                  '—'
+                                }
+                              </strong>
+
+                            </td>
+
+                            {/* DATE */}
+
+                            <td>
+
+                              {formatDate(
+                                transaction.createdAt
+                              )}
+
+                            </td>
+
+                            {/* ITEMS */}
+
+                            <td>
+
+                              {/* COMPLETE RETURN ITEMS */}
+
+                              {transaction.returnedItems
+                                ?.map(
+                                  (
+                                    item,
+                                    index
+                                  ) => (
+
+                                    <div
+                                      className="return-exchange-item"
+                                      key={`return-${index}`}
+                                    >
+
+                                      <span className="return-item-label">
+                                        Return
+                                      </span>
+
+                                      <span>
+                                        {item.dressName}
+                                      </span>
+
+                                      <span>
+                                        ×{' '}
+                                        {
+                                          item.quantity
+                                        }
+                                      </span>
+
+                                    </div>
+
+                                  )
+                                )}
+
+                              {/* EXCHANGE ITEMS */}
+
+                              {transaction.exchangeItems
+                                ?.map(
+                                  (
+                                    item,
+                                    index
+                                  ) => (
+
+                                    <div
+                                      className="return-exchange-item exchange-item-row"
+                                      key={`exchange-${index}`}
+                                    >
+
+                                      <span className="exchange-item-label">
+                                        Exchange
+                                      </span>
+
+                                      <span>
+
+                                        {
+                                          item.returnedDressName
+                                        }
+
+                                        {' × '}
+
+                                        {
+                                          item.returnedQuantity
+                                        }
+
+                                        {' → '}
+
+                                        {
+                                          item.replacementDressName
+                                        }
+
+                                        {' × '}
+
+                                        {
+                                          item.replacementQuantity
+                                        }
+
+                                      </span>
+
+                                    </div>
+
+                                  )
+                                )}
+
+                            </td>
+
+                            {/* PAYMENT */}
+
+                            <td>
+
+                              {transaction
+                                .paymentMethod ||
+                                '—'}
+
+                            </td>
+
+                            {/* RETURN AMOUNT */}
+
+                            <td>
+
                               Rs.{' '}
-                              {profit}
+
+                              {Number(
+                                transaction.returnAmount ||
+                                  0
+                              ).toLocaleString()}
+
+                            </td>
+
+                            {/* EXCHANGE AMOUNT */}
+
+                            <td>
+
+                              Rs.{' '}
+
+                              {Number(
+                                transaction.exchangeAmount ||
+                                  0
+                              ).toLocaleString()}
+
+                            </td>
+
+                            {/* REFUND */}
+
+                            <td>
+
+                              <span className="refund-amount">
+
+                                Rs.{' '}
+
+                                {Number(
+                                  transaction.refundAmount ||
+                                    0
+                                ).toLocaleString()}
+
+                              </span>
+
+                            </td>
+
+                            {/* ADDITIONAL PAYMENT */}
+
+                            <td>
+
+                              <span className="additional-payment">
+
+                                Rs.{' '}
+
+                                {Number(
+                                  transaction.additionalPayment ||
+                                    0
+                                ).toLocaleString()}
+
+                              </span>
+
+                            </td>
+
+                            {/* NET AMOUNT */}
+
+                            <td>
+
+                              <strong
+                                className={
+                                  Number(
+                                    transaction.netAmount ||
+                                      0
+                                  ) < 0
+                                    ? 'negative-amount'
+                                    : Number(
+                                        transaction.netAmount ||
+                                          0
+                                      ) > 0
+                                    ? 'positive-amount'
+                                    : ''
+                                }
+                              >
+
+                                Rs.{' '}
+
+                                {Number(
+                                  transaction.netAmount ||
+                                    0
+                                ).toLocaleString()}
+
+                              </strong>
+
                             </td>
 
                           </tr>
 
                         );
+
                       }
                     )
 
@@ -1062,10 +1677,9 @@ function Sales() {
 
           )}
 
-        </>
+        </div>
 
       )}
-
 
       {/* ====================================
           SHOP EXPENSE SECTION
@@ -1097,7 +1711,6 @@ function Sales() {
 
             </div>
 
-
             <form
               onSubmit={
                 handleExpenseSubmit
@@ -1126,7 +1739,6 @@ function Sales() {
 
               </div>
 
-
               <div className="expense-form-field">
 
                 <label>
@@ -1145,7 +1757,6 @@ function Sales() {
 
               </div>
 
-
               <div className="expense-form-actions">
 
                 <button
@@ -1160,7 +1771,6 @@ function Sales() {
                     ? 'Update Expense'
                     : 'Add Expense'}
                 </button>
-
 
                 {editingExpenseId && (
 
@@ -1179,7 +1789,6 @@ function Sales() {
 
             </form>
 
-
             {expenseMessage && (
 
               <p className="expense-message">
@@ -1189,7 +1798,6 @@ function Sales() {
             )}
 
           </div>
-
 
           {/* EXPENSE HISTORY */}
 
@@ -1211,16 +1819,15 @@ function Sales() {
 
             </div>
 
-
             {expenseLoading ? (
 
-              <p>
+              <p className="sales-loading">
                 Loading expenses...
               </p>
 
             ) : expenses.length === 0 ? (
 
-              <p>
+              <p className="empty-expense-message">
                 No shop expenses found
               </p>
 
@@ -1250,14 +1857,15 @@ function Sales() {
 
                   </thead>
 
-
                   <tbody>
 
                     {expenses.map(
                       (expense) => (
 
                         <tr
-                          key={expense._id}
+                          key={
+                            expense._id
+                          }
                         >
 
                           <td>
@@ -1266,14 +1874,12 @@ function Sales() {
                             )}
                           </td>
 
-
                           <td>
                             Rs.{' '}
                             {Number(
                               expense.amount
-                            )}
+                            ).toLocaleString()}
                           </td>
-
 
                           <td>
 
@@ -1289,7 +1895,6 @@ function Sales() {
                               >
                                 Edit
                               </button>
-
 
                               <button
                                 type="button"
@@ -1324,7 +1929,6 @@ function Sales() {
         </div>
 
       )}
-
 
       {/* ====================================
           DELETE EXPENSE MODAL
@@ -1371,7 +1975,6 @@ function Sales() {
               >
                 Cancel
               </button>
-
 
               <button
                 type="button"

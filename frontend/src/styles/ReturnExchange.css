@@ -1,0 +1,1594 @@
+/* =========================================================
+   RETURN / EXCHANGE PAGE
+   ========================================================= */
+
+.return-exchange-page {
+  width: 100%;
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+/* =========================================================
+   PAGE HEADER
+   ========================================================= */
+
+.return-exchange-page .page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.return-exchange-page .page-header h1 {
+  margin: 0 0 6px;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.return-exchange-page .page-header p {
+  margin: 0;
+  color: #777;
+  font-size: 14px;
+}
+
+/* =========================================================
+   CARD
+   ========================================================= */
+
+.return-exchange-page .card {
+  background: #fff;
+  border: 1px solid #eadfe5;
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+  box-sizing: border-box;
+}
+
+.return-exchange-page .card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 18px;
+}
+
+.return-exchange-page .card-header h2 {
+  margin: 0 0 5px;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.return-exchange-page .card-header p {
+  margin: 0;
+  color: #777;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* =========================================================
+   MESSAGE
+   ========================================================= */
+
+.return-exchange-page .message {
+  padding: 12px 15px;
+  border-radius: 10px;
+  margin-bottom: 18px;
+  font-size: 14px;
+  font-weight: 500;
+  box-sizing: border-box;
+}
+
+.return-exchange-page .message.success {
+  background: #edf9f1;
+  color: #23733d;
+  border: 1px solid #ccebd5;
+}
+
+.return-exchange-page .message.error {
+  background: #fff0f0;
+  color: #a52b2b;
+  border: 1px solid #f2caca;
+}
+
+/* =========================================================
+   INVOICE SEARCH
+   ========================================================= */
+
+.return-exchange-page .invoice-search-card {
+  max-width: 900px;
+}
+
+.return-exchange-page .invoice-search-form {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.return-exchange-page .invoice-search-form input {
+  flex: 1;
+  min-width: 0;
+}
+
+.return-exchange-page .invoice-search-hint {
+  margin-top: 9px;
+  font-size: 12px;
+  color: #888;
+}
+
+.return-exchange-page .invoice-search-hint strong {
+  color: #555;
+}
+
+/* =========================================================
+   FORM ELEMENTS
+   ========================================================= */
+
+.return-exchange-page .form-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.return-exchange-page .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.return-exchange-page .form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #444;
+}
+
+.return-exchange-page input[type='text'],
+.return-exchange-page input[type='number'],
+.return-exchange-page select {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid #d9ccd3;
+  border-radius: 9px;
+  background: #fff;
+  color: #333;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.return-exchange-page input[type='text']:focus,
+.return-exchange-page input[type='number']:focus,
+.return-exchange-page select:focus {
+  border-color: #c7799c;
+  box-shadow:
+    0 0 0 3px rgba(199, 121, 156, 0.12);
+}
+
+.return-exchange-page input:disabled,
+.return-exchange-page select:disabled {
+  background: #f6f4f5;
+  cursor: not-allowed;
+}
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
+.return-exchange-page .btn {
+  min-height: 40px;
+  padding: 9px 15px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    opacity 0.15s ease,
+    box-shadow 0.15s ease;
+  white-space: nowrap;
+}
+
+.return-exchange-page .btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.return-exchange-page .btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.return-exchange-page .btn-primary {
+  background: #c46f96;
+  color: #fff;
+  border-color: #c46f96;
+}
+
+.return-exchange-page .btn-primary:hover:not(:disabled) {
+  box-shadow:
+    0 5px 12px rgba(196, 111, 150, 0.22);
+}
+
+.return-exchange-page .btn-secondary {
+  background: #f7f3f5;
+  color: #5f4c56;
+  border-color: #ddcfd6;
+}
+
+.return-exchange-page .btn-danger {
+  background: #fff;
+  color: #b53245;
+  border-color: #e3a8b1;
+}
+
+.return-exchange-page .btn-danger:hover:not(:disabled) {
+  background: #fff4f5;
+}
+
+/* =========================================================
+   TABLE
+   ========================================================= */
+
+.return-exchange-page .table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.return-exchange-page .data-table {
+  width: 100%;
+  min-width: 850px;
+  border-collapse: collapse;
+}
+
+.return-exchange-page .data-table th {
+  padding: 12px 10px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  color: #5f4f58;
+  background: #faf6f8;
+  border-bottom: 1px solid #eadfe5;
+  white-space: nowrap;
+}
+
+.return-exchange-page .data-table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid #eee6ea;
+  font-size: 13px;
+  color: #444;
+  vertical-align: middle;
+}
+
+.return-exchange-page .data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.return-exchange-page .data-table tbody tr:hover {
+  background: #fdfafb;
+}
+
+/* =========================================================
+   STATUS BADGES
+   ========================================================= */
+
+.return-exchange-page .status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 1.2;
+  font-weight: 700;
+  white-space: nowrap;
+  background: #f0edf0;
+  color: #625861;
+}
+
+.return-exchange-page .status-success {
+  background: #eaf8ef;
+  color: #25733f;
+}
+
+.return-exchange-page .status-warning {
+  background: #fff6df;
+  color: #946c12;
+}
+
+.return-exchange-page .status-danger {
+  background: #ffebee;
+  color: #a72e40;
+}
+
+/* =========================================================
+   ACTION BUTTONS
+   ========================================================= */
+
+.return-exchange-page .action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* =========================================================
+   EMPTY STATE
+   ========================================================= */
+
+.return-exchange-page .empty-state {
+  padding: 30px 20px;
+  text-align: center;
+  color: #888;
+  font-size: 14px;
+  background: #faf8f9;
+  border-radius: 10px;
+}
+
+/* =========================================================
+   SECTION TOTAL
+   ========================================================= */
+
+.return-exchange-page .section-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-top: 18px;
+  padding-top: 15px;
+  border-top: 1px solid #eadfe5;
+  font-size: 15px;
+}
+
+/* =========================================================
+   EXCHANGE BUILDER
+   ========================================================= */
+
+.return-exchange-page .replacement-section {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #eee5e9;
+}
+
+.return-exchange-page .section-subheading {
+  margin-bottom: 15px;
+}
+
+.return-exchange-page .section-subheading h3 {
+  margin: 0 0 4px;
+  font-size: 17px;
+  color: #463941;
+}
+
+.return-exchange-page .section-subheading p {
+  margin: 0;
+  font-size: 13px;
+  color: #888;
+}
+
+/* =========================================================
+   REPLACEMENT ROW
+   ========================================================= */
+
+.return-exchange-page .replacement-row {
+  margin-bottom: 14px;
+  padding: 14px;
+  border: 1px solid #e5d9df;
+  border-radius: 10px;
+  background: #fdfbfc;
+  box-sizing: border-box;
+}
+
+.return-exchange-page .replacement-remove-button {
+  display: flex;
+  align-items: flex-end;
+}
+
+.return-exchange-page .selected-product-info {
+  margin-top: 8px;
+  padding: 9px 11px;
+  border-radius: 7px;
+  background: #f7eef3;
+  color: #5d4652;
+  font-size: 13px;
+}
+
+/* =========================================================
+   SEARCH RESULTS
+   ========================================================= */
+
+.return-exchange-page .search-results {
+  margin-top: 6px;
+  width: 100%;
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid #ddd0d7;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.08);
+  position: relative;
+  z-index: 20;
+}
+
+.return-exchange-page .search-result-item {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  margin: 0;
+  border: none;
+  border-bottom: 1px solid #eee6ea;
+  background: #fff;
+  color: #444;
+  text-align: left;
+  cursor: pointer;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.return-exchange-page .search-result-item:last-child {
+  border-bottom: none;
+}
+
+.return-exchange-page .search-result-item:hover:not(:disabled) {
+  background: #faf2f6;
+}
+
+.return-exchange-page .search-result-item:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.return-exchange-page .search-result-item strong {
+  color: #42343b;
+}
+
+.return-exchange-page .search-result-item span {
+  color: #777;
+}
+
+/* =========================================================
+   REPLACEMENT ACTIONS
+   ========================================================= */
+
+.return-exchange-page .replacement-actions {
+  margin-top: 10px;
+}
+
+/* =========================================================
+   SELECTED EXCHANGE CARD
+   ========================================================= */
+
+.return-exchange-page .exchange-card {
+  border: 1px solid #e5d9df;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 14px;
+  background: #fdfbfc;
+  box-sizing: border-box;
+}
+
+.return-exchange-page .exchange-card:last-child {
+  margin-bottom: 0;
+}
+
+.return-exchange-page .exchange-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.return-exchange-page .exchange-card-header strong {
+  font-size: 14px;
+  color: #463941;
+}
+
+.return-exchange-page .exchange-card-header div div {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #777;
+}
+
+.return-exchange-page .exchange-replacement-table {
+  margin-top: 12px;
+}
+
+/* =========================================================
+   EXCHANGE SUMMARY
+   ========================================================= */
+
+.return-exchange-page .exchange-summary {
+  display: grid;
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.return-exchange-page .exchange-summary>div {
+  padding: 11px 12px;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #eadfe5;
+}
+
+.return-exchange-page .exchange-summary span {
+  display: block;
+  margin-bottom: 4px;
+  color: #888;
+  font-size: 12px;
+}
+
+.return-exchange-page .exchange-summary strong {
+  display: block;
+  font-size: 14px;
+  color: #44363e;
+}
+
+/* =========================================================
+   SETTLEMENT SUMMARY
+   ========================================================= */
+
+.return-exchange-page .summary-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.return-exchange-page .summary-grid>div {
+  padding: 14px;
+  border: 1px solid #eadfe5;
+  border-radius: 10px;
+  background: #faf7f9;
+}
+
+.return-exchange-page .summary-grid span {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: #888;
+}
+
+.return-exchange-page .summary-grid strong {
+  display: block;
+  font-size: 16px;
+  color: #43353d;
+}
+
+/* =========================================================
+   FINAL ACTION
+   ========================================================= */
+
+.return-exchange-page .final-action {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.return-exchange-page .final-action .btn {
+  min-width: 230px;
+}
+
+/* =========================================================
+   RETURN / EXCHANGE PAGE
+   ========================================================= */
+
+.return-exchange-page {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+
+/* =========================================================
+   INVOICE SEARCH
+========================================================= */
+
+.invoice-search-card {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+
+/* =========================================================
+   ORIGINAL INVOICE
+========================================================= */
+
+.original-invoice-section {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+
+/* =========================================================
+   RETURN / EXCHANGE ITEMS
+========================================================= */
+
+.return-item-card,
+.exchange-item-card {
+  width: 100%;
+  box-sizing: border-box;
+
+  padding: 15px;
+
+  margin-bottom: 12px;
+
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+
+  background: #ffffff;
+}
+
+
+.return-item-card:hover,
+.exchange-item-card:hover {
+  border-color: var(--gold);
+}
+
+
+/* =========================================================
+   ITEM HEADER
+========================================================= */
+
+.return-item-header,
+.exchange-item-header {
+  display: flex;
+
+  justify-content: space-between;
+  align-items: center;
+
+  gap: 12px;
+
+  flex-wrap: wrap;
+}
+
+
+.return-item-header h3,
+.exchange-item-header h3 {
+  margin: 0;
+
+  color: var(--text);
+
+  font-size: 15px;
+}
+
+
+/* =========================================================
+   QUANTITY CONTROL
+========================================================= */
+
+.quantity-control {
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+}
+
+
+.quantity-control button {
+  width: 34px;
+  height: 34px;
+
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-sm);
+
+  background: white;
+
+  color: var(--primary);
+
+  cursor: pointer;
+
+  font-size: 17px;
+  font-weight: 700;
+}
+
+
+.quantity-control button:hover {
+  background: var(--gold);
+
+  color: white;
+}
+
+
+.quantity-control input {
+  width: 55px;
+  height: 34px;
+
+  padding: 5px;
+
+  box-sizing: border-box;
+
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+
+  text-align: center;
+
+  font-size: 14px;
+}
+
+
+/* =========================================================
+   EXCHANGE PRODUCT SELECT
+========================================================= */
+
+.exchange-product-select {
+  width: 100%;
+
+  min-height: 42px;
+
+  padding: 9px 12px;
+
+  box-sizing: border-box;
+
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+
+  background: white;
+
+  color: var(--text);
+
+  font-size: 14px;
+
+  outline: none;
+}
+
+
+.exchange-product-select:focus {
+  border-color: var(--gold);
+
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.12);
+}
+
+
+/* =========================================================
+   RETURN / EXCHANGE SUMMARY
+========================================================= */
+
+.return-exchange-summary {
+  width: 100%;
+
+  box-sizing: border-box;
+
+  margin-top: 18px;
+
+  padding: 15px;
+
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+
+  background: #ffffff;
+}
+
+
+.return-exchange-summary h3 {
+  margin: 0 0 12px;
+
+  color: var(--text);
+
+  font-size: 15px;
+}
+
+
+.return-summary-row,
+.exchange-summary-row {
+  display: flex;
+
+  justify-content: space-between;
+  align-items: center;
+
+  gap: 15px;
+
+  padding: 6px 0;
+}
+
+
+.return-summary-label,
+.exchange-summary-label {
+  color: var(--muted);
+
+  font-size: 13px;
+}
+
+
+.return-summary-value,
+.exchange-summary-value {
+  color: var(--text);
+
+  font-size: 13px;
+
+  font-weight: 700;
+
+  text-align: right;
+}
+
+
+/* =========================================================
+   PAYMENT METHOD (CASH / CARD)
+   ========================================================= */
+
+.return-payment-method {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 20px;
+  padding: 18px 20px;
+  background: #FFF8FA;
+  border: 1px solid #EAD9DF;
+  border-radius: 12px;
+}
+
+.return-payment-method h3 {
+  margin: 0 0 14px;
+  color: #2B2024;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.payment-method-radio-group {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  min-height: 40px;
+}
+
+/* Radio labels */
+.payment-method-radio-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: #2B2024;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Custom radio button */
+.payment-method-radio-option input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  border: 2px solid #D9B7C2;
+  border-radius: 50%;
+  background: #FFFFFF;
+  cursor: pointer;
+  position: relative;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+/* Selected radio */
+.payment-method-radio-option input[type="radio"]:checked {
+  border-color: #C76B8A;
+  background: #C76B8A;
+  box-shadow: 0 0 0 3px #F4DCE5;
+}
+
+/* Inner selected circle */
+.payment-method-radio-option input[type="radio"]:checked::after {
+  content: "";
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #FFFFFF;
+  border-radius: 50%;
+}
+
+/* Hover */
+.payment-method-radio-option:hover input[type="radio"] {
+  border-color: #C9A227;
+}
+
+/* =========================================================
+   ACTION BUTTONS
+========================================================= */
+
+.return-exchange-actions {
+  display: flex;
+
+  justify-content: flex-end;
+  align-items: center;
+
+  gap: 10px;
+
+  flex-wrap: wrap;
+
+  margin-top: 20px;
+}
+
+
+.return-exchange-actions button {
+  min-height: 42px;
+
+  padding: 10px 18px;
+
+  border-radius: var(--radius-sm);
+
+  cursor: pointer;
+
+  font-size: 14px;
+
+  font-weight: 600;
+}
+
+
+/* =========================================================
+   RETURN / EXCHANGE RECEIPT
+   USES SAME STRUCTURE AS Receipt.jsx
+========================================================= */
+
+.return-receipt-section {
+  width: 100%;
+
+  box-sizing: border-box;
+
+  margin-top: 25px;
+}
+
+
+/*
+   IMPORTANT:
+
+   Do NOT make the receipt 100% width.
+
+   It must use the same 380px width as Receipt.jsx.
+*/
+
+.return-receipt-section .receipt-page {
+  width: 100%;
+
+  padding: 30px;
+
+  box-sizing: border-box;
+}
+
+
+.return-receipt-section .receipt {
+  width: 380px;
+
+  max-width: 100%;
+
+  margin: 0 auto;
+
+  box-sizing: border-box;
+
+  background: #FFFFFF;
+
+  padding: 25px;
+
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+
+  box-shadow: var(--shadow-md);
+}
+
+
+/* =========================================================
+   RECEIPT HEADER
+   SAME STRUCTURE AS NORMAL RECEIPT
+========================================================= */
+
+.return-receipt-section .receipt-header {
+  text-align: center;
+}
+
+
+.return-receipt-section .receipt-header h1 {
+  margin: 0;
+
+  color: var(--primary);
+
+  font-size: 25px;
+
+  font-weight: 700;
+}
+
+
+.return-receipt-section .receipt-subtitle {
+  margin: 4px 0 10px;
+
+  color: var(--muted);
+
+  font-size: 12px;
+}
+
+
+.return-receipt-section .receipt-heading-line {
+  width: 45px;
+  height: 2px;
+
+  margin: 0 auto 10px;
+
+  background: var(--gold);
+}
+
+
+.return-receipt-section .receipt-header h2 {
+  margin: 0;
+
+  color: var(--text);
+
+  font-size: 14px;
+
+  letter-spacing: 1.5px;
+}
+
+
+/* =========================================================
+   RECEIPT INFORMATION
+========================================================= */
+
+.return-receipt-section .receipt-info {
+  margin-top: 18px;
+}
+
+
+.return-receipt-section .receipt-info-row {
+  display: flex;
+
+  justify-content: space-between;
+  align-items: flex-start;
+
+  gap: 15px;
+
+  margin: 3px 0;
+
+  font-size: 12px;
+
+  font-weight: bold;
+}
+
+
+.return-receipt-section .receipt-info-row span {
+  color: var(--muted);
+}
+
+
+.return-receipt-section .receipt-info-row strong {
+  color: var(--text);
+
+  text-align: right;
+
+  max-width: 65%;
+
+  word-break: break-word;
+}
+
+
+/* =========================================================
+   ONLY MAIN RECEIPT DIVIDER
+========================================================= */
+
+.return-receipt-section .receipt-divider {
+  border-top: 2px solid black;
+
+  margin: 5px 0;
+}
+
+
+/*
+   IMPORTANT:
+   No product divider.
+   No border around every product.
+*/
+
+
+.return-receipt-section .receipt-product-divider {
+  display: none;
+}
+
+
+/* =========================================================
+   PRODUCTS
+========================================================= */
+
+.return-receipt-section .receipt-item {
+  display: flex;
+
+  justify-content: space-between;
+  align-items: flex-start;
+
+  gap: 15px;
+
+  padding: 8px 0;
+}
+
+
+.return-receipt-section .receipt-item-left {
+  flex: 1;
+
+  min-width: 0;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 3px;
+
+  font-weight: bold;
+}
+
+
+.return-receipt-section .receipt-product-name {
+  color: var(--text);
+
+  font-size: 13px;
+
+  line-height: 1.3;
+
+  word-break: break-word;
+}
+
+
+.return-receipt-section .receipt-item-left span {
+  color: var(--muted);
+
+  font-size: 11px;
+}
+
+
+/* =========================================================
+   PRODUCT RIGHT SIDE
+========================================================= */
+
+.return-receipt-section .receipt-item-right {
+  min-width: 95px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: flex-end;
+
+  gap: 4px;
+
+  text-align: right;
+}
+
+
+.return-receipt-section .receipt-item-right span {
+  color: var(--muted);
+
+  font-size: 11px;
+}
+
+
+.return-receipt-section .receipt-item-right strong {
+  color: var(--text);
+
+  font-size: 13px;
+}
+
+
+/* =========================================================
+   SALE PRICE
+========================================================= */
+
+.return-receipt-section .receipt-sale-price-label {
+  color: var(--text);
+
+  font-size: 11px;
+
+  font-weight: 700;
+
+  text-transform: none;
+}
+
+
+.return-receipt-section .receipt-sale-price {
+  color: var(--text);
+
+  font-size: 11px;
+
+  font-weight: 600;
+}
+
+
+/* =========================================================
+   TOTAL
+========================================================= */
+
+.return-receipt-section .receipt-total-row {
+  display: flex;
+
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 2px 0;
+}
+
+
+.return-receipt-section .receipt-total-row span {
+  color: var(--text);
+
+  font-size: 12px;
+
+  font-weight: bold;
+
+  /* letter-spacing: 1px; */
+}
+
+
+.return-receipt-section .receipt-total-row strong {
+  color: var(--primary);
+
+  font-size: 13px;
+
+  font-weight: bold;
+}
+
+
+/* =========================================================
+   RETURN / EXCHANGE LABEL
+========================================================= */
+
+.return-receipt-section .return-label,
+.return-receipt-section .exchange-label {
+  font-size: 10px;
+
+  font-weight: bold;
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.return-receipt-section .receipt-footer {
+  text-align: center;
+
+  margin-top: 10px;
+}
+
+
+.return-receipt-section .receipt-thank-you {
+  margin: 0 0 10px;
+
+  color: var(--primary);
+
+  font-size: 13px;
+
+  font-weight: 600;
+}
+
+
+.return-receipt-section .receipt-follow {
+  margin: 0 0 5px;
+
+  color: var(--text);
+
+  font-size: 11px;
+
+  font-weight: 600;
+}
+
+
+.return-receipt-section .receipt-social,
+.return-receipt-section .receipt-phone {
+  margin: 3px 0;
+
+  color: var(--muted);
+
+  font-size: 10px;
+}
+
+
+.return-receipt-section .receipt-phone {
+  margin-top: 6px;
+
+  color: var(--text);
+
+  font-weight: 600;
+}
+
+
+.return-receipt-section .receipt-footer-line {
+  width: 15px;
+  height: 3px;
+
+  background: var(--gold);
+}
+
+
+.return-receipt-section .receipt-developed {
+  margin: 0;
+
+  color: var(--muted);
+
+  font-size: 9px;
+}
+
+
+.return-receipt-section .receipt-address {
+  margin: 5px 0 10px;
+
+  color: var(--muted);
+
+  font-size: 10px;
+
+  line-height: 1.4;
+
+  font-weight: bold;
+
+  text-align: center;
+}
+
+
+/* =========================================================
+   PRINT BUTTON
+========================================================= */
+
+.return-receipt-section .print-receipt-button {
+  width: 100%;
+
+  padding: 12px;
+
+  margin-top: 20px;
+
+  border: none;
+
+  border-radius: var(--radius-sm);
+
+  background: var(--primary);
+
+  color: white;
+
+  cursor: pointer;
+
+  font-size: 14px;
+
+  font-weight: 600;
+}
+
+
+.return-receipt-section .print-receipt-button:hover {
+  background: var(--primary-dark);
+
+  transform: none;
+}
+
+
+/* =========================================================
+   NEW RETURN BUTTON
+========================================================= */
+
+.new-return-button {
+  display: block;
+
+  margin: 20px auto;
+
+  padding: 12px 20px;
+
+  border: none;
+
+  border-radius: var(--radius-sm);
+
+  background: var(--primary);
+
+  color: white;
+
+  cursor: pointer;
+
+  font-size: 14px;
+
+  font-weight: 600;
+}
+
+
+.new-return-button:hover {
+  background: var(--primary-dark);
+  color: white;
+
+  transform: none;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 600px) {
+
+  .return-receipt-section .receipt-page {
+    padding: 15px;
+  }
+
+  .return-receipt-section .receipt {
+    width: 100%;
+  }
+
+  .return-exchange-actions {
+    flex-direction: column;
+
+    align-items: stretch;
+  }
+
+  .return-exchange-actions button {
+    width: 100%;
+  }
+
+}
+
+
+/* =========================================================
+   RETURN / EXCHANGE RECEIPT PRINT
+   ========================================================= */
+
+@media print {
+
+  @page {
+    size: 80mm auto !important;
+    margin: 0 !important;
+  }
+
+  /* Only hide layout elements when return receipt is active */
+  .return-receipt-section {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 80mm !important;
+    min-width: 80mm !important;
+    max-width: 80mm !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block !important;
+    background: #ffffff !important;
+    overflow: visible !important;
+    visibility: visible !important;
+  }
+
+  .return-receipt-section * {
+    visibility: visible !important;
+  }
+
+  .return-receipt-section .receipt-page {
+    position: static !important;
+    width: 80mm !important;
+    min-width: 80mm !important;
+    max-width: 80mm !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: flex-start !important;
+    background: #ffffff !important;
+    overflow: visible !important;
+  }
+
+  .return-receipt-section .receipt {
+    position: relative !important;
+    width: 72mm !important;
+    min-width: 72mm !important;
+    max-width: 72mm !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 auto !important;
+    padding: 4mm 2mm !important;
+    box-sizing: border-box !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+    overflow: visible !important;
+    page-break-after: avoid !important;
+    page-break-inside: avoid !important;
+    break-after: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .return-receipt-section .print-receipt-button,
+  .new-return-button,
+  .no-print,
+  .new-return-exchange-btn {
+    display: none !important;
+  }
+
+  .return-receipt-section .receipt-product-divider {
+    display: none !important;
+  }
+
+  .return-receipt-section .receipt-divider {
+    border-top: 1px solid #000000 !important;
+    margin: 5px 0 !important;
+  }
+
+  .return-receipt-section .receipt-product-name {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    line-height: 1.3 !important;
+  }
+
+  .return-receipt-section .receipt-item-left span {
+    font-size: 9px !important;
+  }
+
+  .return-receipt-section .receipt-item-right {
+    min-width: 95px !important;
+  }
+
+  .return-receipt-section .receipt-item-right span {
+    font-size: 9px !important;
+  }
+
+  .return-receipt-section .receipt-item-right strong {
+    font-size: 10px !important;
+    font-weight: 700 !important;
+  }
+
+  .return-receipt-section .receipt-sale-price-label {
+    font-size: 9px !important;
+    font-weight: 700 !important;
+  }
+
+  .return-receipt-section .receipt-sale-price {
+    font-size: 9px !important;
+    font-weight: 600 !important;
+  }
+
+  .return-receipt-section .receipt-total-row {
+    padding: 8px 0 !important;
+  }
+
+  .return-receipt-section .receipt-total-row span {
+    font-size: 12px !important;
+    font-weight: 700 !important;
+  }
+
+  .return-receipt-section .receipt-total-row strong {
+    font-size: 14px !important;
+    font-weight: 700 !important;
+  }
+
+  .return-receipt-section .receipt-thank-you {
+    font-size: 10px !important;
+    font-weight: 600 !important;
+  }
+
+  .return-receipt-section .receipt-follow,
+  .return-receipt-section .receipt-social,
+  .return-receipt-section .receipt-phone {
+    font-size: 9px !important;
+  }
+
+  .return-receipt-section .receipt-address {
+    font-size: 8px !important;
+    line-height: 1.3 !important;
+  }
+
+  .return-receipt-section .receipt-developed {
+    font-size: 8px !important;
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  .return-receipt-section .receipt,
+  .return-receipt-section .receipt * {
+    color: #000000 !important;
+  }
+}

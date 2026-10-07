@@ -1,0 +1,634 @@
+/* ================================
+   RECEIPT PAGE
+================================ */
+
+.receipt-page {
+  min-height: 100vh;
+
+  background: var(--background);
+
+  display: flex;
+  justify-content: center;
+
+  padding: 30px;
+}
+
+
+/* ================================
+   RECEIPT
+================================ */
+
+.receipt {
+  width: 380px;
+
+  background: #FFFFFF;
+
+  padding: 25px;
+
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+
+  box-shadow: var(--shadow-md);
+
+  box-sizing: border-box;
+}
+
+
+/* ================================
+   RECEIPT HEADER
+================================ */
+
+.receipt-header {
+  text-align: center;
+}
+
+.receipt-header h1 {
+  margin: 0;
+
+  color: var(--primary);
+
+  font-size: 25px;
+  font-weight: 700;
+}
+
+.receipt-subtitle {
+  margin: 4px 0 10px;
+
+  color: var(--muted);
+
+  font-size: 12px;
+}
+
+.receipt-heading-line {
+  width: 45px;
+  height: 2px;
+
+  margin: 0 auto 10px;
+
+  background: var(--gold);
+}
+
+.receipt-header h2 {
+  margin: 0;
+
+  color: var(--text);
+
+  font-size: 14px;
+  letter-spacing: 1.5px;
+}
+
+
+/* ================================
+   RECEIPT INFORMATION
+================================ */
+
+.receipt-info {
+  margin-top: 18px;
+}
+
+.receipt-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+
+  gap: 15px;
+
+  margin: 3px 0;
+
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.receipt-info-row span {
+  color: var(--muted);
+}
+
+.receipt-info-row strong {
+  color: var(--text);
+
+  text-align: right;
+
+  max-width: 65%;
+
+  word-break: break-word;
+}
+
+
+/* ================================
+   DIVIDER
+================================ */
+
+.receipt-divider {
+  border-top: 2px solid black;
+
+  margin: 14px 0;
+}
+
+
+/* ================================
+   PRODUCTS
+================================ */
+
+.receipt-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+
+  gap: 15px;
+
+  padding: 8px 0;
+}
+
+
+/* LEFT SIDE */
+
+.receipt-item-left {
+  flex: 1;
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+  font-weight: bold;
+
+  gap: 3px;
+}
+
+.receipt-product-name {
+  color: var(--text);
+
+  font-size: 13px;
+  line-height: 1.3;
+
+  word-break: break-word;
+}
+
+.receipt-item-left span {
+  color: var(--muted);
+
+  font-size: 11px;
+}
+
+
+/* RIGHT SIDE */
+
+.receipt-item-right {
+  min-width: 95px;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: flex-end;
+
+  gap: 4px;
+
+  text-align: right;
+}
+
+.receipt-item-right span {
+  color: var(--muted);
+
+  font-size: 11px;
+}
+
+.receipt-item-right strong {
+  color: var(--text);
+
+  font-size: 13px;
+}
+
+
+/* ================================
+   TOTAL
+================================ */
+
+.receipt-total-row {
+  display: flex;
+
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 8px 0;
+}
+
+.receipt-total-row span {
+  color: var(--text);
+
+  font-size: 15px;
+  font-weight: 700;
+
+  letter-spacing: 1px;
+}
+
+.receipt-total-row strong {
+  color: var(--primary);
+
+  font-size: 18px;
+  font-weight: 700;
+}
+
+
+/* ================================
+   FOOTER
+================================ */
+
+.receipt-footer {
+  text-align: center;
+
+  margin-top: 10px;
+}
+
+.receipt-thank-you {
+  margin: 0 0 10px;
+
+  color: var(--primary);
+
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.receipt-follow {
+  margin: 0 0 5px;
+
+  color: var(--text);
+
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.receipt-social,
+.receipt-phone {
+  margin: 3px 0;
+
+  color: var(--muted);
+
+  font-size: 10px;
+}
+
+.receipt-phone {
+  margin-top: 6px;
+
+  color: var(--text);
+
+  font-weight: 600;
+}
+
+.receipt-footer-line {
+  width: 15px;
+  height: 3px;
+
+  /* margin: 1px auto 0px; */
+
+  background: var(--gold);
+}
+
+.receipt-developed {
+  margin: 0;
+
+  color: var(--muted);
+
+  font-size: 9px;
+}
+
+.receipt-address {
+  margin: 5px 0 10px;
+
+  color: var(--muted);
+
+  font-size: 10px;
+  line-height: 1.4;
+  font-weight: bold;
+  text-align: center;
+}
+
+
+/* ================================
+   PRINT BUTTON
+================================ */
+
+.print-receipt-button {
+  width: 100%;
+
+  padding: 12px;
+
+  margin-top: 20px;
+
+  border: none;
+  border-radius: var(--radius-sm);
+
+  background: var(--primary);
+
+  color: white;
+
+  cursor: pointer;
+
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.print-receipt-button:hover {
+  background: var(--primary-dark);
+
+  transform: none;
+}
+
+
+/* ================================
+   VIEW RECEIPT BUTTON
+================================ */
+
+.view-receipt-button {
+  padding: 12px 20px;
+
+  border: none;
+  border-radius: var(--radius-sm);
+
+  background: var(--primary);
+
+  color: white;
+
+  cursor: pointer;
+
+  font-size: 16px;
+
+  margin-bottom: 20px;
+}
+
+.view-receipt-button:hover {
+  background: var(--primary-dark);
+
+  transform: none;
+}
+
+/* Sale price thick */
+.receipt-sale-price-label {
+  color: var(--text);
+
+  font-size: 11px;
+
+  font-weight: 700;
+
+  text-transform: none;
+}
+
+.receipt-sale-price {
+  color: var(--text);
+
+  font-size: 11px;
+
+  font-weight: 600;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1000px) {
+
+  .dashboard-cards {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .product-form-box form {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+
+  .pos-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .pos-product-list {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-content {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 600px) {
+
+  .dashboard-header {
+    padding: 16px 18px;
+
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    gap: 12px;
+  }
+
+  .dashboard-nav {
+    padding: 10px 15px;
+
+    overflow-x: auto;
+  }
+
+  .dashboard-nav button {
+    white-space: nowrap;
+  }
+
+  .dashboard-content {
+    padding: 15px;
+  }
+
+  .dashboard-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .product-form-box form {
+    grid-template-columns: 1fr;
+  }
+
+  .product-search {
+    flex-direction: column;
+  }
+
+  .pos-products,
+  .pos-cart {
+    padding: 16px;
+  }
+
+  .sales-header {
+    align-items: flex-start;
+
+    flex-direction: column;
+
+    gap: 12px;
+  }
+
+  .receipt-page {
+    padding: 15px;
+  }
+
+  .receipt {
+    width: 100%;
+  }
+}
+
+/* =========================================================
+   INVOICE PRINT
+   ========================================================= */
+
+@media print {
+
+  /* Continuous Thermal Roll Page Setup */
+  @page {
+    size: 80mm auto !important;
+    margin: 0 !important;
+  }
+
+  /* Document */
+  html,
+  body {
+    width: 80mm !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    overflow: visible !important;
+  }
+
+  /* Hide UI / navigation / buttons */
+  .print-receipt-button,
+  .no-print,
+  .new-return-exchange-btn,
+  footer,
+  nav,
+  header,
+  .powered-by-netlify,
+  iframe,
+  #netlify-badge {
+    display: none !important;
+  }
+
+  /* Receipt page wrapper */
+  .receipt-page {
+    position: static !important;
+    display: block !important;
+
+    width: 80mm !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+
+    margin: 0 auto !important;
+    padding: 0 !important;
+
+    background: #ffffff !important;
+    overflow: visible !important;
+  }
+
+  /* Actual receipt */
+  .receipt {
+    display: block !important;
+    visibility: visible !important;
+
+    width: 72mm !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+
+    margin: 0 auto !important;
+    padding: 4mm 2mm !important;
+
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+
+    background: #ffffff !important;
+    box-sizing: border-box !important;
+
+    page-break-after: avoid !important;
+    page-break-inside: avoid !important;
+    break-after: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Product divider */
+  .receipt-product-divider {
+    margin: 2px 0 !important;
+  }
+
+  /* Sale Price */
+  .receipt-sale-price-label {
+    font-size: 9px !important;
+    font-weight: 700 !important;
+  }
+
+  .receipt-sale-price {
+    font-size: 9px !important;
+    font-weight: 600 !important;
+  }
+
+  /* Product name */
+  .receipt-product-name {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+  }
+
+  /* Product details */
+  .receipt-item-left span {
+    font-size: 9px !important;
+  }
+
+  /* Right side amounts */
+  .receipt-item-right strong {
+    font-size: 10px !important;
+    font-weight: 700 !important;
+  }
+
+  .receipt-item-right span {
+    font-size: 9px !important;
+  }
+
+  /* Total */
+  .receipt-total-row span {
+    font-size: 12px !important;
+    font-weight: 700 !important;
+  }
+
+  .receipt-total-row strong {
+    font-size: 14px !important;
+    font-weight: 700 !important;
+  }
+
+  /* Footer */
+  .receipt-thank-you {
+    font-size: 10px !important;
+    font-weight: 600 !important;
+  }
+
+  .receipt-follow,
+  .receipt-social,
+  .receipt-phone {
+    font-size: 9px !important;
+  }
+
+  .receipt-developed {
+    font-size: 8px !important;
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  .receipt-address {
+    font-size: 8px !important;
+    line-height: 1.3 !important;
+  }
+
+  /* Pure black for thermal printer */
+  .receipt,
+  .receipt * {
+    color: #000000 !important;
+  }
+}
+

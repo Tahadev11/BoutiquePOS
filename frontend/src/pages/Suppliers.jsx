@@ -1,85 +1,88 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import api from '../api/api';
 
 function Suppliers() {
-  // =====================================================
-  // SUPPLIER STATE
-  // =====================================================
+  // =========================================================
+  // STATE
+  // =========================================================
 
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
-  // Add supplier
-  const [showForm, setShowForm] = useState(false);
+  // Current date/time display
+  const [currentDateTime, setCurrentDateTime] =
+    useState(new Date());
 
-  const [form, setForm] = useState({
+  // Add supplier
+  const [showAddForm, setShowAddForm] = useState(false);
+
+  const [supplierForm, setSupplierForm] = useState({
     name: '',
     location: '',
-    balance: '',
+    openingBalance: '',
   });
 
   // Edit supplier
-  const [editingSupplier, setEditingSupplier] = useState(null);
+  const [editingSupplier, setEditingSupplier] =
+    useState(null);
 
   const [editForm, setEditForm] = useState({
     name: '',
     location: '',
   });
 
-  const [editLoading, setEditLoading] = useState(false);
+  // Ledger
+  const [selectedSupplier, setSelectedSupplier] =
+    useState(null);
 
-  // =====================================================
-  // LEDGER STATE
-  // =====================================================
+  const [ledgerTransactions, setLedgerTransactions] =
+    useState([]);
 
-  const [selectedSupplier, setSelectedSupplier] = useState(null);
-  const [ledger, setLedger] = useState([]);
-  const [ledgerBalance, setLedgerBalance] = useState(null);
-  const [ledgerLoading, setLedgerLoading] = useState(false);
+  const [ledgerBalance, setLedgerBalance] =
+    useState(null);
 
-  // Transaction detail
+  const [ledgerLoading, setLedgerLoading] =
+    useState(false);
+
+  const [showLedger, setShowLedger] =
+    useState(false);
+
+  // Transaction details
   const [selectedTransaction, setSelectedTransaction] =
     useState(null);
 
-  // =====================================================
-  // PRODUCTS / PURCHASE STATE
-  // =====================================================
+  const [showTransactionDetails, setShowTransactionDetails] =
+    useState(false);
 
-  const [products, setProducts] = useState([]);
-  const [productsLoading, setProductsLoading] = useState(false);
-
+  // Purchase
   const [showPurchaseModal, setShowPurchaseModal] =
     useState(false);
 
-  const [purchaseLoading, setPurchaseLoading] =
-    useState(false);
-
-  const [purchaseForm, setPurchaseForm] = useState({
-    items: [
-      {
-        productId: '',
-        quantity: '1',
-        purchasePrice: '',
-        searchTerm: '',
-      },
-    ],
-    note: '',
-  });
-
-  // Which product-search dropdown is open
-  const [openProductSearch, setOpenProductSearch] =
+  const [purchaseSupplier, setPurchaseSupplier] =
     useState(null);
 
-  // =====================================================
-  // PAYMENT STATE
-  // =====================================================
+  const [purchaseItems, setPurchaseItems] =
+    useState([]);
 
+  const [purchaseNote, setPurchaseNote] =
+    useState('');
+
+  const [productSearch, setProductSearch] =
+    useState('');
+
+  const [products, setProducts] =
+    useState([]);
+
+  const [productsLoading, setProductsLoading] =
+    useState(false);
+
+  // Payment
   const [showPaymentModal, setShowPaymentModal] =
     useState(false);
 
-  const [paymentLoading, setPaymentLoading] =
-    useState(false);
+  const [paymentSupplier, setPaymentSupplier] =
+    useState(null);
 
   const [paymentForm, setPaymentForm] = useState({
     amount: '',
@@ -87,9 +90,24 @@ function Suppliers() {
     note: '',
   });
 
-  // =====================================================
+  const [paymentLoading, setPaymentLoading] =
+    useState(false);
+
+  // =========================================================
+  // CURRENT DATE / TIME
+  // =========================================================
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentDateTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  // =========================================================
   // FETCH SUPPLIERS
-  // =====================================================
+  // =========================================================
 
   const fetchSuppliers = async () => {
     try {
@@ -98,124 +116,246 @@ function Suppliers() {
 
       const response = await api.get('/suppliers');
 
-      setSuppliers(
-        Array.isArray(response.data)
-          ? response.data
-          : [],
-      );
+      const supplierData = response.data || [];
+
+      setSuppliers(supplierData);
+
+      return supplierData;
     } catch (error) {
-      console.error(error);
+      console.error(
+        'Error fetching suppliers:',
+        error,
+      );
+
+      console.error(
+        'Backend response:',
+        error.response?.data,
+      );
+
+      const backendMessage =
+        error.response?.data?.message;
 
       setMessage(
-        error.response?.data?.message ||
-          'Failed to load suppliers',
+        Array.isArray(backendMessage)
+          ? backendMessage.join(', ')
+          : backendMessage ||
+              'Failed to load suppliers',
       );
+
+      return [];
     } finally {
       setLoading(false);
     }
   };
 
-  // =====================================================
-  // FETCH PRODUCTS
-  // =====================================================
-
-  const fetchProducts = async () => {
-    try {
-      setProductsLoading(true);
-
-      const response = await api.get('/products');
-
-      setProducts(
-        Array.isArray(response.data)
-          ? response.data
-          : [],
-      );
-    } catch (error) {
-      console.error(error);
-
-      setMessage(
-        error.response?.data?.message ||
-          'Failed to load products',
-      );
-    } finally {
-      setProductsLoading(false);
-    }
-  };
-
   useEffect(() => {
     fetchSuppliers();
-    fetchProducts();
   }, []);
 
-  // =====================================================
+  // =========================================================
+  // FORMATTING
+  // =========================================================
+
+  const formatAmount = (amount) => {
+    const value = Number(amount ?? 0);
+
+    return `Rs. ${
+      Number.isFinite(value)
+        ? Math.abs(value).toLocaleString('en-PK')
+        : '0'
+    }`;
+  };
+
+  const formatDate = (date) => {
+    if (!date) {
+      return '-';
+    }
+
+    return new Date(date).toLocaleDateString(
+      'en-PK',
+      {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      },
+    );
+  };
+
+  const formatDateTime = (date) => {
+    if (!date) {
+      return '-';
+    }
+
+    return new Date(date).toLocaleString(
+      'en-PK',
+      {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      },
+    );
+  };
+
+  // =========================================================
+  // SUPPLIER BALANCE STATUS
+  // =========================================================
+
+  /*
+    Supplier balance meaning:
+
+    Positive:
+      You owe money to the supplier.
+
+    Zero:
+      Supplier is fully settled.
+
+    Negative:
+      You have an advance/credit with the supplier.
+  */
+
+  const getBalanceStatus = (balance) => {
+    const amount = Number(balance ?? 0);
+
+    if (amount > 0) {
+      return {
+        type: 'payable',
+        label: 'Payable',
+        amount,
+      };
+    }
+
+    if (amount < 0) {
+      return {
+        type: 'advance',
+        label: 'Advance',
+        amount: Math.abs(amount),
+      };
+    }
+
+    return {
+      type: 'settled',
+      label: 'Settled',
+      amount: 0,
+    };
+  };
+
+  const formatBalance = (balance) => {
+    const status = getBalanceStatus(balance);
+
+    return formatAmount(status.amount);
+  };
+
+  // =========================================================
   // ADD SUPPLIER
-  // =====================================================
+  // =========================================================
 
-  const handleChange = (event) => {
-    const { name, value } = event.target;
+  const handleSupplierFormChange = (e) => {
+    const { name, value } = e.target;
 
-    setForm((previous) => ({
-      ...previous,
+    setSupplierForm((prev) => ({
+      ...prev,
       [name]: value,
     }));
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  const handleAddSupplier = async (e) => {
+    e.preventDefault();
 
-    if (!form.name.trim()) {
-      setMessage('Supplier name is required');
+    if (!supplierForm.name.trim()) {
+      setMessage(
+        'Supplier name is required',
+      );
       return;
     }
 
-    if (
-      form.balance !== '' &&
-      Number(form.balance) < 0
-    ) {
-      setMessage('Opening balance cannot be negative');
-      return;
+    if (supplierForm.openingBalance !== '') {
+      const openingBalance = Number(
+        supplierForm.openingBalance,
+      );
+
+      if (
+        !Number.isFinite(openingBalance) ||
+        openingBalance < 0
+      ) {
+        setMessage(
+          'Opening balance must be 0 or greater',
+        );
+        return;
+      }
     }
 
     try {
       setLoading(true);
       setMessage('');
 
-      await api.post('/suppliers', {
-        name: form.name.trim(),
-        location: form.location.trim(),
-        ...(form.balance !== ''
-          ? {
-              balance: Number(form.balance),
-            }
-          : {}),
-      });
+      const payload = {
+        name: supplierForm.name.trim(),
+        location:
+          supplierForm.location.trim(),
+      };
 
-      setForm({
+      /*
+        Backend DTO expects "balance",
+        not "openingBalance".
+      */
+
+      if (
+        supplierForm.openingBalance !== '' &&
+        supplierForm.openingBalance !== null
+      ) {
+        payload.balance = Number(
+          supplierForm.openingBalance,
+        );
+      }
+
+      await api.post(
+        '/suppliers',
+        payload,
+      );
+
+      setMessage(
+        'Supplier added successfully',
+      );
+
+      setSupplierForm({
         name: '',
         location: '',
-        balance: '',
+        openingBalance: '',
       });
 
-      setShowForm(false);
-
-      setMessage('Supplier added successfully');
+      setShowAddForm(false);
 
       await fetchSuppliers();
     } catch (error) {
-      console.error(error);
+      console.error(
+        'Error adding supplier:',
+        error,
+      );
+
+      console.error(
+        'Backend response:',
+        error.response?.data,
+      );
+
+      const backendMessage =
+        error.response?.data?.message;
 
       setMessage(
-        error.response?.data?.message ||
-          'Failed to add supplier',
+        Array.isArray(backendMessage)
+          ? backendMessage.join(', ')
+          : backendMessage ||
+              'Failed to add supplier',
       );
     } finally {
       setLoading(false);
     }
   };
 
-  // =====================================================
+  // =========================================================
   // EDIT SUPPLIER
-  // =====================================================
+  // =========================================================
 
   const openEditSupplier = (supplier) => {
     setEditingSupplier(supplier);
@@ -228,631 +368,641 @@ function Suppliers() {
     setMessage('');
   };
 
-  const closeEditSupplier = () => {
-    setEditingSupplier(null);
+  const handleEditFormChange = (e) => {
+    const { name, value } = e.target;
 
-    setEditForm({
-      name: '',
-      location: '',
-    });
-  };
-
-  const handleEditChange = (event) => {
-    const { name, value } = event.target;
-
-    setEditForm((previous) => ({
-      ...previous,
+    setEditForm((prev) => ({
+      ...prev,
       [name]: value,
     }));
   };
 
-  const handleEditSupplier = async (event) => {
-    event.preventDefault();
+  const handleUpdateSupplier = async (e) => {
+    e.preventDefault();
 
     if (!editForm.name.trim()) {
-      setMessage('Supplier name is required');
+      setMessage(
+        'Supplier name is required',
+      );
+      return;
+    }
+
+    if (!editingSupplier) {
       return;
     }
 
     try {
-      setEditLoading(true);
+      setLoading(true);
       setMessage('');
 
       await api.patch(
         `/suppliers/${editingSupplier._id}`,
         {
           name: editForm.name.trim(),
-          location: editForm.location.trim(),
+          location:
+            editForm.location.trim(),
         },
       );
 
-      setMessage('Supplier updated successfully');
+      setMessage(
+        'Supplier updated successfully',
+      );
 
-      closeEditSupplier();
+      setEditingSupplier(null);
 
       await fetchSuppliers();
     } catch (error) {
-      console.error(error);
+      console.error(
+        'Error updating supplier:',
+        error,
+      );
+
+      console.error(
+        'Backend response:',
+        error.response?.data,
+      );
+
+      const backendMessage =
+        error.response?.data?.message;
 
       setMessage(
-        error.response?.data?.message ||
-          'Failed to update supplier',
+        Array.isArray(backendMessage)
+          ? backendMessage.join(', ')
+          : backendMessage ||
+              'Failed to update supplier',
       );
     } finally {
-      setEditLoading(false);
+      setLoading(false);
     }
   };
 
-  // =====================================================
-  // ACTIVATE / DEACTIVATE
-  // =====================================================
+  // =========================================================
+  // ACTIVATE / DEACTIVATE SUPPLIER
+  // =========================================================
 
-  const toggleSupplierStatus = async (supplier) => {
+  const handleToggleSupplier = async (
+    supplier,
+  ) => {
     try {
+      setLoading(true);
       setMessage('');
 
-      await api.patch(`/suppliers/${supplier._id}`, {
-        isActive: !supplier.isActive,
-      });
+      await api.patch(
+        `/suppliers/${supplier._id}`,
+        {
+          isActive: !supplier.isActive,
+        },
+      );
 
       setMessage(
         supplier.isActive
-          ? 'Supplier deactivated'
-          : 'Supplier activated',
+          ? 'Supplier deactivated successfully'
+          : 'Supplier activated successfully',
       );
 
       await fetchSuppliers();
     } catch (error) {
-      console.error(error);
+      console.error(
+        'Error updating supplier status:',
+        error,
+      );
+
+      console.error(
+        'Backend response:',
+        error.response?.data,
+      );
+
+      const backendMessage =
+        error.response?.data?.message;
 
       setMessage(
-        error.response?.data?.message ||
-          'Failed to update supplier',
+        Array.isArray(backendMessage)
+          ? backendMessage.join(', ')
+          : backendMessage ||
+              'Failed to update supplier status',
       );
+    } finally {
+      setLoading(false);
     }
   };
 
-  // =====================================================
+  // =========================================================
   // DELETE SUPPLIER
-  // =====================================================
+  // =========================================================
 
-  const deleteSupplier = async (supplier) => {
-    const confirmed = window.confirm(
-      `Delete supplier "${supplier.name}"?`,
+  const handleDeleteSupplier = async (
+    supplier,
+  ) => {
+    const balance = Number(
+      supplier.balance ?? 0,
     );
 
-    if (!confirmed) {
+    /*
+      Supplier can ONLY be deleted when
+      the account is completely settled.
+
+      Positive balance = payable
+      Negative balance = advance
+
+      Both must be cleared before deletion.
+    */
+
+    if (balance !== 0) {
+      setMessage(
+        balance > 0
+          ? 'Supplier cannot be deleted while a payable balance exists. Clear the balance first.'
+          : 'Supplier cannot be deleted while an advance exists. Use the advance against future purchases first.',
+      );
+
+      return;
+    }
+
+    if (
+      !window.confirm(
+        `Are you sure you want to delete ${supplier.name}?`,
+      )
+    ) {
       return;
     }
 
     try {
+      setLoading(true);
       setMessage('');
 
-      await api.delete(`/suppliers/${supplier._id}`);
+      await api.delete(
+        `/suppliers/${supplier._id}`,
+      );
 
-      setMessage('Supplier deleted successfully');
+      setMessage(
+        'Supplier deleted successfully',
+      );
 
       await fetchSuppliers();
     } catch (error) {
-      console.error(error);
+      console.error(
+        'Error deleting supplier:',
+        error,
+      );
+
+      console.error(
+        'Backend response:',
+        error.response?.data,
+      );
+
+      const backendMessage =
+        error.response?.data?.message;
 
       setMessage(
-        error.response?.data?.message ||
-          'Failed to delete supplier',
+        Array.isArray(backendMessage)
+          ? backendMessage.join(', ')
+          : backendMessage ||
+              'Failed to delete supplier',
       );
+    } finally {
+      setLoading(false);
     }
   };
 
-  // =====================================================
-  // LOAD SUPPLIER LEDGER
-  // =====================================================
+  // =========================================================
+  // LEDGER
+  // =========================================================
 
-  const loadSupplierLedger = async (supplierId) => {
+  const openLedger = async (supplier) => {
+    setSelectedSupplier(supplier);
+    setShowLedger(true);
+    setLedgerLoading(true);
+    setLedgerTransactions([]);
+    setLedgerBalance(null);
+    setMessage('');
+
     try {
-      setLedgerLoading(true);
+      const response = await api.get(
+        `/suppliers/${supplier._id}/ledger`,
+      );
 
-      const [supplierResponse, ledgerResponse] =
-        await Promise.all([
-          api.get(`/suppliers/${supplierId}`),
-          api.get(`/suppliers/${supplierId}/ledger`),
-        ]);
+      const supplierData =
+        response.data?.supplier;
 
-      setSelectedSupplier(supplierResponse.data);
+      const currentBalance =
+        response.data?.currentBalance ??
+        supplierData?.balance ??
+        supplier.balance ??
+        0;
 
-      const transactions = Array.isArray(
-        ledgerResponse.data?.transactions,
-      )
-        ? ledgerResponse.data.transactions
-        : [];
-
-      setLedger(transactions);
+      setLedgerTransactions(
+        response.data?.transactions || [],
+      );
 
       setLedgerBalance(
-        ledgerResponse.data?.currentBalance ??
-          supplierResponse.data?.balance ??
-          0,
+        currentBalance,
       );
+
+      if (supplierData) {
+        setSelectedSupplier(
+          supplierData,
+        );
+      }
     } catch (error) {
-      console.error(error);
+      console.error(
+        'Error fetching supplier ledger:',
+        error,
+      );
+
+      console.error(
+        'Backend response:',
+        error.response?.data,
+      );
+
+      const backendMessage =
+        error.response?.data?.message;
 
       setMessage(
-        error.response?.data?.message ||
-          'Failed to load supplier ledger',
+        Array.isArray(backendMessage)
+          ? backendMessage.join(', ')
+          : backendMessage ||
+              'Failed to load supplier ledger',
       );
-
-      setSelectedSupplier(null);
-      setLedger([]);
-      setLedgerBalance(null);
     } finally {
       setLedgerLoading(false);
     }
   };
 
-  const viewLedger = async (supplier) => {
-    setMessage('');
-
-    setSelectedSupplier(supplier);
-    setLedger([]);
-    setLedgerBalance(supplier.balance || 0);
-
-    await loadSupplierLedger(supplier._id);
-  };
-
-  const refreshSelectedLedger = async (supplierId) => {
-    try {
-      const [supplierResponse, ledgerResponse] =
-        await Promise.all([
-          api.get(`/suppliers/${supplierId}`),
-          api.get(`/suppliers/${supplierId}/ledger`),
-        ]);
-
-      setSelectedSupplier(supplierResponse.data);
-
-      const transactions = Array.isArray(
-        ledgerResponse.data?.transactions,
-      )
-        ? ledgerResponse.data.transactions
-        : [];
-
-      setLedger(transactions);
-
-      setLedgerBalance(
-        ledgerResponse.data?.currentBalance ??
-          supplierResponse.data?.balance ??
-          0,
-      );
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
   const closeLedger = () => {
+    setShowLedger(false);
     setSelectedSupplier(null);
-    setLedger([]);
+    setLedgerTransactions([]);
     setLedgerBalance(null);
+  };
+
+  // =========================================================
+  // TRANSACTION DETAILS
+  // =========================================================
+
+  const openTransactionDetails = (
+    transaction,
+  ) => {
+    setSelectedTransaction(transaction);
+    setShowTransactionDetails(true);
+  };
+
+  const closeTransactionDetails = () => {
+    setShowTransactionDetails(false);
     setSelectedTransaction(null);
-    setShowPurchaseModal(false);
-    setShowPaymentModal(false);
-    setOpenProductSearch(null);
   };
 
-  // =====================================================
-  // PRODUCT LABEL
-  // =====================================================
+  // =========================================================
+  // PRODUCTS
+  // =========================================================
 
-  const getProductLabel = (product) => {
-    const parts = [];
+  const fetchProducts = async () => {
+    try {
+      setProductsLoading(true);
 
-    if (product.dressName) {
-      parts.push(product.dressName);
+      const response = await api.get(
+        '/products',
+      );
+
+      setProducts(response.data || []);
+    } catch (error) {
+      console.error(
+        'Error fetching products:',
+        error,
+      );
+
+      console.error(
+        'Backend response:',
+        error.response?.data,
+      );
+
+      const backendMessage =
+        error.response?.data?.message;
+
+      setMessage(
+        Array.isArray(backendMessage)
+          ? backendMessage.join(', ')
+          : backendMessage ||
+              'Failed to load products',
+      );
+    } finally {
+      setProductsLoading(false);
     }
-
-    if (product.brand) {
-      parts.push(product.brand);
-    }
-
-    if (product.size) {
-      parts.push(`Size: ${product.size}`);
-    }
-
-    if (product.color) {
-      parts.push(`Color: ${product.color}`);
-    }
-
-    return parts.join(' • ');
   };
 
-  // =====================================================
-  // SEARCH PRODUCTS
-  // =====================================================
+  useEffect(() => {
+    if (showPurchaseModal) {
+      fetchProducts();
+    }
+  }, [showPurchaseModal]);
 
-  const getFilteredProducts = (index) => {
-    const searchTerm =
-      purchaseForm.items[index]?.searchTerm
-        ?.trim()
-        .toLowerCase() || '';
+  const filteredProducts = useMemo(() => {
+    const search =
+      productSearch
+        .trim()
+        .toLowerCase();
 
-    if (!searchTerm) {
-      return [];
+    if (!search) {
+      return products;
     }
 
-    if (searchTerm.length < 1) {
-      return [];
-    }
+    return products.filter((product) => {
+      const dressName =
+        product.dressName
+          ?.toLowerCase() || '';
 
-    return products
-      .filter((product) => {
-        const searchableText = [
-          product.dressName,
-          product.brand,
-          product.category,
-          product.size,
-          product.color,
-        ]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase();
+      const category =
+        product.category
+          ?.toLowerCase() || '';
 
-        return searchableText.includes(searchTerm);
-      })
-      .slice(0, 50);
-  };
+      const brand =
+        product.brand
+          ?.toLowerCase() || '';
 
-  // =====================================================
-  // PURCHASE FORM
-  // =====================================================
+      const size =
+        product.size
+          ?.toLowerCase() || '';
 
-  const openPurchaseModal = async () => {
-    if (!selectedSupplier) {
-      return;
-    }
+      const color =
+        product.color
+          ?.toLowerCase() || '';
 
-    setMessage('');
-
-    if (products.length === 0) {
-      await fetchProducts();
-    }
-
-    setPurchaseForm({
-      items: [
-        {
-          productId: '',
-          quantity: '1',
-          purchasePrice: '',
-          searchTerm: '',
-        },
-      ],
-      note: '',
+      return (
+        dressName.includes(search) ||
+        category.includes(search) ||
+        brand.includes(search) ||
+        size.includes(search) ||
+        color.includes(search)
+      );
     });
+  }, [
+    products,
+    productSearch,
+  ]);
 
-    setOpenProductSearch(null);
+  // =========================================================
+  // PURCHASE MODAL
+  // =========================================================
 
+  const openPurchaseModal = (
+    supplier,
+  ) => {
+    setPurchaseSupplier(supplier);
+    setPurchaseItems([]);
+    setPurchaseNote('');
+    setProductSearch('');
+    setCurrentDateTime(new Date());
     setShowPurchaseModal(true);
+    setMessage('');
   };
 
   const closePurchaseModal = () => {
-    if (purchaseLoading) {
+    setShowPurchaseModal(false);
+    setPurchaseSupplier(null);
+    setPurchaseItems([]);
+    setPurchaseNote('');
+    setProductSearch('');
+  };
+
+  const addProductToPurchase = (
+    product,
+  ) => {
+    const alreadyAdded =
+      purchaseItems.some(
+        (item) =>
+          item.productId ===
+          product._id,
+      );
+
+    if (alreadyAdded) {
+      setMessage(
+        'This product is already added to the purchase',
+      );
       return;
     }
 
-    setShowPurchaseModal(false);
-    setOpenProductSearch(null);
+    setPurchaseItems((prev) => [
+      ...prev,
+      {
+        productId: product._id,
+        dressName:
+          product.dressName || '',
+        brand:
+          product.brand || '',
+        category:
+          product.category || '',
+        size:
+          product.size || '',
+        color:
+          product.color || '',
+        quantity: 1,
 
-    setPurchaseForm({
-      items: [
-        {
-          productId: '',
-          quantity: '1',
-          purchasePrice: '',
-          searchTerm: '',
-        },
-      ],
-      note: '',
-    });
+        // Wholesale / purchase price
+        purchasePrice: Number(
+          product.purchasePrice || 0,
+        ),
+      },
+    ]);
+
+    setProductSearch('');
+    setMessage('');
   };
 
-  const handlePurchaseItemChange = (
-    index,
+  const updatePurchaseItem = (
+    productId,
     field,
     value,
   ) => {
-    setPurchaseForm((previous) => {
-      const updatedItems = [...previous.items];
-
-      updatedItems[index] = {
-        ...updatedItems[index],
-        [field]: value,
-      };
-
-      return {
-        ...previous,
-        items: updatedItems,
-      };
-    });
-
-    // When user starts typing again after selecting
-    // a product, clear the selected product.
-    if (
-      field === 'searchTerm' &&
-      purchaseForm.items[index]?.productId
-    ) {
-      const selectedProduct = products.find(
-        (product) =>
-          product._id ===
-          purchaseForm.items[index].productId,
-      );
-
-      const selectedLabel = selectedProduct
-        ? getProductLabel(selectedProduct)
-        : '';
-
-      if (value !== selectedLabel) {
-        setPurchaseForm((previous) => {
-          const updatedItems = [...previous.items];
-
-          updatedItems[index] = {
-            ...updatedItems[index],
-            productId: '',
-            purchasePrice: '',
-          };
-
-          return {
-            ...previous,
-            items: updatedItems,
-          };
-        });
-      }
-    }
-  };
-
-  const selectPurchaseProduct = (
-    index,
-    product,
-  ) => {
-    setPurchaseForm((previous) => {
-      const updatedItems = [...previous.items];
-
-      updatedItems[index] = {
-        ...updatedItems[index],
-        productId: product._id,
-        searchTerm: getProductLabel(product),
-        purchasePrice:
-          product.purchasePrice !== undefined &&
-          product.purchasePrice !== null
-            ? String(product.purchasePrice)
-            : '',
-      };
-
-      return {
-        ...previous,
-        items: updatedItems,
-      };
-    });
-
-    setOpenProductSearch(null);
-  };
-
-  const clearPurchaseProduct = (index) => {
-    setPurchaseForm((previous) => {
-      const updatedItems = [...previous.items];
-
-      updatedItems[index] = {
-        ...updatedItems[index],
-        productId: '',
-        searchTerm: '',
-        purchasePrice: '',
-      };
-
-      return {
-        ...previous,
-        items: updatedItems,
-      };
-    });
-
-    setOpenProductSearch(index);
-  };
-
-  const addPurchaseItem = () => {
-    setPurchaseForm((previous) => ({
-      ...previous,
-      items: [
-        ...previous.items,
-        {
-          productId: '',
-          quantity: '1',
-          purchasePrice: '',
-          searchTerm: '',
-        },
-      ],
-    }));
-  };
-
-  const removePurchaseItem = (index) => {
-    setPurchaseForm((previous) => {
-      const updatedItems = previous.items.filter(
-        (_, itemIndex) => itemIndex !== index,
-      );
-
-      return {
-        ...previous,
-        items:
-          updatedItems.length > 0
-            ? updatedItems
-            : [
-                {
-                  productId: '',
-                  quantity: '1',
-                  purchasePrice: '',
-                  searchTerm: '',
-                },
-              ],
-      };
-    });
-
-    setOpenProductSearch(null);
-  };
-
-  const getPurchaseItemSubtotal = (item) => {
-    const quantity = Number(item.quantity || 0);
-    const price = Number(
-      item.purchasePrice || 0,
+    setPurchaseItems((prev) =>
+      prev.map((item) =>
+        item.productId === productId
+          ? {
+              ...item,
+              [field]:
+                field ===
+                  'quantity' ||
+                field ===
+                  'purchasePrice'
+                  ? value
+                  : value,
+            }
+          : item,
+      ),
     );
-
-    return quantity * price;
   };
 
-  const getPurchaseTotal = () => {
-    return purchaseForm.items.reduce(
-      (total, item) =>
-        total + getPurchaseItemSubtotal(item),
+  const removePurchaseItem = (
+    productId,
+  ) => {
+    setPurchaseItems((prev) =>
+      prev.filter(
+        (item) =>
+          item.productId !==
+          productId,
+      ),
+    );
+  };
+
+  const purchaseTotal = useMemo(() => {
+    return purchaseItems.reduce(
+      (total, item) => {
+        const quantity =
+          Number(item.quantity) || 0;
+
+        const price =
+          Number(
+            item.purchasePrice,
+          ) || 0;
+
+        return (
+          total +
+          quantity * price
+        );
+      },
       0,
     );
-  };
+  }, [purchaseItems]);
 
-  const handlePurchaseNoteChange = (event) => {
-    setPurchaseForm((previous) => ({
-      ...previous,
-      note: event.target.value,
-    }));
-  };
+  const handleCreatePurchase = async (
+    e,
+  ) => {
+    e.preventDefault();
 
-  // =====================================================
-  // SUBMIT PURCHASE
-  // =====================================================
-
-  const handlePurchaseSubmit = async (event) => {
-    event.preventDefault();
-
-    if (!selectedSupplier) {
+    if (!purchaseSupplier) {
       return;
     }
 
-    const hasInvalidProduct =
-      purchaseForm.items.some(
-        (item) => !item.productId,
-      );
-
-    if (hasInvalidProduct) {
+    if (
+      purchaseItems.length === 0
+    ) {
       setMessage(
-        'Please select a product for every purchase item',
+        'Please add at least one product',
       );
       return;
     }
 
-    const hasInvalidQuantity =
-      purchaseForm.items.some(
-        (item) =>
-          !Number.isInteger(Number(item.quantity)) ||
-          Number(item.quantity) < 1,
+    const invalidItem =
+      purchaseItems.find(
+        (item) => {
+          const quantity =
+            Number(item.quantity);
+
+          const purchasePrice =
+            Number(item.purchasePrice);
+
+          return (
+            !Number.isFinite(quantity) ||
+            quantity <= 0 ||
+            !Number.isFinite(
+              purchasePrice,
+            ) ||
+            purchasePrice < 0
+          );
+        },
       );
 
-    if (hasInvalidQuantity) {
+    if (invalidItem) {
       setMessage(
-        'Quantity must be a whole number greater than 0',
-      );
-      return;
-    }
-
-    const hasInvalidPrice =
-      purchaseForm.items.some(
-        (item) =>
-          item.purchasePrice === '' ||
-          Number(item.purchasePrice) < 0,
-      );
-
-    if (hasInvalidPrice) {
-      setMessage(
-        'Purchase price is required for every item',
-      );
-      return;
-    }
-
-    const productIds = purchaseForm.items.map(
-      (item) => item.productId,
-    );
-
-    const hasDuplicates =
-      new Set(productIds).size !== productIds.length;
-
-    if (hasDuplicates) {
-      setMessage(
-        'The same dress cannot be added twice in one purchase. Increase its quantity instead.',
+        'Please enter valid quantity and purchase price for all products',
       );
       return;
     }
 
     try {
-      setPurchaseLoading(true);
+      setLoading(true);
       setMessage('');
 
+      const payload = {
+        items: purchaseItems.map(
+          (item) => ({
+            productId:
+              item.productId,
+            quantity:
+              Number(
+                item.quantity,
+              ),
+            purchasePrice:
+              Number(
+                item.purchasePrice,
+              ),
+          }),
+        ),
+      };
+
+      if (
+        purchaseNote.trim()
+      ) {
+        payload.note =
+          purchaseNote.trim();
+      }
+
+      /*
+        Transaction date is NOT sent
+        from the frontend.
+
+        Backend automatically records
+        the actual current date/time
+        when the purchase is submitted.
+      */
+
       await api.post(
-        `/suppliers/${selectedSupplier._id}/purchases`,
-        {
-          items: purchaseForm.items.map((item) => ({
-            productId: item.productId,
-            quantity: Number(item.quantity),
-            purchasePrice: Number(
-              item.purchasePrice,
-            ),
-          })),
-          ...(purchaseForm.note.trim()
-            ? {
-                note: purchaseForm.note.trim(),
-              }
-            : {}),
-        },
+        `/suppliers/${purchaseSupplier._id}/purchases`,
+        payload,
       );
 
-      setMessage(
-        'Purchase recorded successfully. Stock and supplier balance updated.',
-      );
-
-      setShowPurchaseModal(false);
-      setOpenProductSearch(null);
-
-      setPurchaseForm({
-        items: [
-          {
-            productId: '',
-            quantity: '1',
-            purchasePrice: '',
-            searchTerm: '',
-          },
-        ],
-        note: '',
-      });
+      closePurchaseModal();
 
       await fetchSuppliers();
 
-      if (selectedSupplier) {
-        await refreshSelectedLedger(
-          selectedSupplier._id,
+      if (
+        selectedSupplier &&
+        selectedSupplier._id ===
+          purchaseSupplier._id
+      ) {
+        const freshSupplier =
+          await api.get(
+            `/suppliers/${purchaseSupplier._id}`,
+          );
+
+        await openLedger(
+          freshSupplier.data,
         );
       }
 
-      await fetchProducts();
+      setMessage(
+        'Purchase recorded successfully',
+      );
     } catch (error) {
-      console.error(error);
+      console.error(
+        'Error creating purchase:',
+        error,
+      );
+
+      console.error(
+        'Backend response:',
+        error.response?.data,
+      );
+
+      const backendMessage =
+        error.response?.data?.message;
 
       setMessage(
-        error.response?.data?.message ||
-          'Failed to record purchase',
+        Array.isArray(backendMessage)
+          ? backendMessage.join(', ')
+          : backendMessage ||
+              'Failed to record purchase',
       );
     } finally {
-      setPurchaseLoading(false);
+      setLoading(false);
     }
   };
 
-  // =====================================================
-  // PAYMENT
-  // =====================================================
+  // =========================================================
+  // PAYMENT MODAL
+  // =========================================================
 
-  const openPaymentModal = () => {
-    if (!selectedSupplier) {
-      return;
-    }
-
-    setMessage('');
+  const openPaymentModal = (
+    supplier,
+  ) => {
+    setPaymentSupplier(supplier);
 
     setPaymentForm({
       amount: '',
@@ -860,15 +1010,14 @@ function Suppliers() {
       note: '',
     });
 
+    setCurrentDateTime(new Date());
     setShowPaymentModal(true);
+    setMessage('');
   };
 
   const closePaymentModal = () => {
-    if (paymentLoading) {
-      return;
-    }
-
     setShowPaymentModal(false);
+    setPaymentSupplier(null);
 
     setPaymentForm({
       amount: '',
@@ -877,190 +1026,178 @@ function Suppliers() {
     });
   };
 
-  const handlePaymentChange = (event) => {
-    const { name, value } = event.target;
+  const handlePaymentFormChange = (
+    e,
+  ) => {
+    const { name, value } = e.target;
 
-    setPaymentForm((previous) => ({
-      ...previous,
+    setPaymentForm((prev) => ({
+      ...prev,
       [name]: value,
     }));
   };
 
-  const handlePaymentSubmit = async (event) => {
-    event.preventDefault();
+  const handleCreatePayment = async (
+    e,
+  ) => {
+    e.preventDefault();
 
-    if (!selectedSupplier) {
+    if (!paymentSupplier) {
       return;
     }
 
-    const amount = Number(paymentForm.amount);
-    const currentBalance = Number(
-      ledgerBalance ??
-        selectedSupplier.balance ??
-        0,
+    const amount = Number(
+      paymentForm.amount,
     );
 
-    if (!amount || amount <= 0) {
+    if (
+      !Number.isFinite(amount) ||
+      amount <= 0
+    ) {
       setMessage(
         'Payment amount must be greater than 0',
       );
       return;
     }
 
-    if (amount > currentBalance) {
-      setMessage(
-        `Payment cannot be greater than the current balance of ${formatAmount(
-          currentBalance,
-        )}`,
-      );
-      return;
-    }
+    /*
+      IMPORTANT:
+
+      Overpayment is intentionally allowed.
+
+      Example:
+
+      Current balance = Rs. 50,000
+      Payment = Rs. 60,000
+
+      New balance:
+
+      50,000 - 60,000
+      = -10,000
+
+      Negative balance means:
+      Rs. 10,000 advance with supplier.
+
+      Future purchases automatically
+      consume this advance.
+    */
 
     try {
       setPaymentLoading(true);
       setMessage('');
 
+      const payload = {
+        amount,
+        paymentMethod:
+          paymentForm.paymentMethod,
+      };
+
+      if (
+        paymentForm.note.trim()
+      ) {
+        payload.note =
+          paymentForm.note.trim();
+      }
+
+      /*
+        Transaction date is NOT sent
+        from the frontend.
+
+        Backend automatically records
+        the actual current date/time
+        when the payment is submitted.
+      */
+
       await api.post(
-        `/suppliers/${selectedSupplier._id}/payments`,
-        {
-          amount,
-          paymentMethod:
-            paymentForm.paymentMethod,
-          ...(paymentForm.note.trim()
-            ? {
-                note: paymentForm.note.trim(),
-              }
-            : {}),
-        },
+        `/suppliers/${paymentSupplier._id}/payments`,
+        payload,
       );
 
-      setMessage(
-        'Payment recorded successfully. Supplier balance updated.',
-      );
-
-      setShowPaymentModal(false);
-
-      setPaymentForm({
-        amount: '',
-        paymentMethod: 'cash',
-        note: '',
-      });
+      closePaymentModal();
 
       await fetchSuppliers();
 
-      if (selectedSupplier) {
-        await refreshSelectedLedger(
-          selectedSupplier._id,
+      if (
+        selectedSupplier &&
+        selectedSupplier._id ===
+          paymentSupplier._id
+      ) {
+        const freshSupplier =
+          await api.get(
+            `/suppliers/${paymentSupplier._id}`,
+          );
+
+        await openLedger(
+          freshSupplier.data,
         );
       }
-    } catch (error) {
-      console.error(error);
 
       setMessage(
-        error.response?.data?.message ||
-          'Failed to record payment',
+        'Payment recorded successfully',
+      );
+    } catch (error) {
+      console.error(
+        'Error creating payment:',
+        error,
+      );
+
+      console.error(
+        'Backend response:',
+        error.response?.data,
+      );
+
+      const backendMessage =
+        error.response?.data?.message;
+
+      setMessage(
+        Array.isArray(backendMessage)
+          ? backendMessage.join(', ')
+          : backendMessage ||
+              'Failed to record payment',
       );
     } finally {
       setPaymentLoading(false);
     }
   };
 
-  // =====================================================
-  // TRANSACTION DETAILS
-  // =====================================================
-
-  const viewTransaction = (transaction) => {
-    setSelectedTransaction(transaction);
-  };
-
-  const closeTransaction = () => {
-    setSelectedTransaction(null);
-  };
-
-  // =====================================================
-  // FORMATTING
-  // =====================================================
-
-  const formatDate = (date) => {
-    if (!date) {
-      return '—';
-    }
-
-    return new Date(date).toLocaleDateString(
-      'en-GB',
-      {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-      },
-    );
-  };
-
-  const formatDateTime = (date) => {
-    if (!date) {
-      return '—';
-    }
-
-    return new Date(date).toLocaleString(
-      'en-GB',
-      {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      },
-    );
-  };
-
-  const formatAmount = (amount) => {
-    if (
-      amount === undefined ||
-      amount === null
-    ) {
-      return '—';
-    }
-
-    return `Rs. ${Number(amount).toLocaleString()}`;
-  };
-
-  // =====================================================
+  // =========================================================
   // RENDER
-  // =====================================================
+  // =========================================================
 
   return (
     <div className="suppliers-page">
-      {/* =================================================
+
+      {/* =====================================================
           HEADER
-      ================================================= */}
+      ====================================================== */}
 
       <div className="suppliers-header">
         <div>
           <h1>Suppliers</h1>
 
           <p>
-            Manage suppliers, purchases, payments and
-            supplier accounts.
+            Manage suppliers, purchases,
+            payments and supplier ledgers.
           </p>
         </div>
 
         <button
-          type="button"
-          className="supplier-add-button"
-          onClick={() => {
-            setShowForm(!showForm);
-            setMessage('');
-          }}
+          className="add-supplier-btn"
+          onClick={() =>
+            setShowAddForm(
+              !showAddForm,
+            )
+          }
         >
-          {showForm
+          {showAddForm
             ? 'Close'
             : '+ Add Supplier'}
         </button>
       </div>
 
-      {/* =================================================
+      {/* =====================================================
           MESSAGE
-      ================================================= */}
+      ====================================================== */}
 
       {message && (
         <div className="supplier-message">
@@ -1068,103 +1205,126 @@ function Suppliers() {
         </div>
       )}
 
-      {/* =================================================
+      {/* =====================================================
           ADD SUPPLIER
-      ================================================= */}
+      ====================================================== */}
 
-      {showForm && (
+      {showAddForm && (
         <div className="supplier-form-card">
-          <h2>Add Supplier</h2>
+          <div className="supplier-form-header">
+            <h2>Add Supplier</h2>
+          </div>
 
-          <form onSubmit={handleSubmit}>
+          <form
+            onSubmit={
+              handleAddSupplier
+            }
+          >
             <div className="supplier-form-grid">
-              <div className="supplier-field">
-                <label>Supplier Name</label>
+
+              <div className="form-group">
+                <label>
+                  Supplier Name
+                </label>
 
                 <input
                   type="text"
                   name="name"
-                  value={form.name}
-                  onChange={handleChange}
-                  placeholder="e.g. Maria.B"
+                  value={
+                    supplierForm.name
+                  }
+                  onChange={
+                    handleSupplierFormChange
+                  }
+                  placeholder="Enter supplier name"
+                  required
                 />
               </div>
 
-              <div className="supplier-field">
+              <div className="form-group">
                 <label>
-                  Location / Warehouse
+                  Location / Address
                 </label>
 
                 <input
                   type="text"
                   name="location"
-                  value={form.location}
-                  onChange={handleChange}
-                  placeholder="e.g. Hyderabad"
+                  value={
+                    supplierForm.location
+                  }
+                  onChange={
+                    handleSupplierFormChange
+                  }
+                  placeholder="Enter supplier location"
                 />
               </div>
 
-              <div className="supplier-field">
-                <label>Opening Balance</label>
+              <div className="form-group">
+                <label>
+                  Opening Balance
+                </label>
 
                 <input
                   type="number"
-                  name="balance"
-                  min="0"
-                  value={form.balance}
-                  onChange={handleChange}
+                  name="openingBalance"
+                  value={
+                    supplierForm.openingBalance
+                  }
+                  onChange={
+                    handleSupplierFormChange
+                  }
                   placeholder="0"
+                  min="0"
+                  step="0.01"
                 />
 
                 <small>
-                  Optional. Initial amount owed to the
-                  supplier.
+                  Optional. This is the
+                  initial amount owed to
+                  the supplier.
                 </small>
               </div>
+
             </div>
 
             <div className="supplier-form-actions">
               <button
-                type="button"
-                className="supplier-cancel-button"
-                onClick={() => {
-                  setShowForm(false);
-
-                  setForm({
-                    name: '',
-                    location: '',
-                    balance: '',
-                  });
-                }}
-              >
-                Cancel
-              </button>
-
-              <button
                 type="submit"
-                className="supplier-save-button"
+                className="primary-btn"
                 disabled={loading}
               >
                 {loading
                   ? 'Saving...'
                   : 'Save Supplier'}
               </button>
+
+              <button
+                type="button"
+                className="secondary-btn"
+                onClick={() =>
+                  setShowAddForm(false)
+                }
+              >
+                Cancel
+              </button>
             </div>
           </form>
         </div>
       )}
 
-      {/* =================================================
-          SUPPLIER TABLE
-      ================================================= */}
+      {/* =====================================================
+          SUPPLIERS TABLE
+      ====================================================== */}
 
-      <div className="supplier-table-card">
-        <div className="supplier-table-header">
+      <div className="suppliers-table-card">
+
+        <div className="suppliers-table-header">
           <div>
-            <h2>Supplier Accounts</h2>
+            <h2>Supplier List</h2>
 
-            <span className="supplier-count">
-              {suppliers.length} supplier
+            <span>
+              {suppliers.length}{' '}
+              supplier
               {suppliers.length !== 1
                 ? 's'
                 : ''}
@@ -1172,17 +1332,26 @@ function Suppliers() {
           </div>
         </div>
 
-        {loading && suppliers.length === 0 ? (
+        {loading &&
+        suppliers.length === 0 ? (
           <div className="supplier-loading">
             Loading suppliers...
           </div>
         ) : suppliers.length === 0 ? (
           <div className="supplier-empty">
-            No suppliers found.
+            <h3>
+              No suppliers found
+            </h3>
+
+            <p>
+              Add your first supplier to
+              start managing purchases and
+              payments.
+            </p>
           </div>
         ) : (
-          <div className="supplier-table-wrapper">
-            <table className="supplier-table">
+          <div className="table-responsive">
+            <table className="suppliers-table">
               <thead>
                 <tr>
                   <th>Supplier</th>
@@ -1194,155 +1363,225 @@ function Suppliers() {
               </thead>
 
               <tbody>
-                {suppliers.map((supplier) => (
-                  <tr key={supplier._id}>
-                    <td>
-                      <div className="supplier-name-cell">
-                        <strong>
-                          {supplier.name}
-                        </strong>
-                      </div>
-                    </td>
+                {suppliers.map(
+                  (supplier) => {
+                    const balanceStatus =
+                      getBalanceStatus(
+                        supplier.balance,
+                      );
 
-                    <td>
-                      {supplier.location || '—'}
-                    </td>
-
-                    <td>
-                      <strong className="supplier-balance">
-                        {formatAmount(
-                          supplier.balance || 0,
-                        )}
-                      </strong>
-                    </td>
-
-                    <td>
-                      <span
-                        className={`supplier-status ${
-                          supplier.isActive
-                            ? 'active'
-                            : 'inactive'
-                        }`}
+                    return (
+                      <tr
+                        key={
+                          supplier._id
+                        }
                       >
-                        {supplier.isActive
-                          ? 'Active'
-                          : 'Inactive'}
-                      </span>
-                    </td>
+                        <td>
+                          <div className="supplier-name-cell">
+                            <strong>
+                              {
+                                supplier.name
+                              }
+                            </strong>
+                          </div>
+                        </td>
 
-                    <td>
-                      <div className="supplier-actions">
-                        <button
-                          type="button"
-                          className="supplier-action ledger"
-                          onClick={() =>
-                            viewLedger(supplier)
-                          }
-                        >
-                          View Ledger
-                        </button>
+                        <td>
+                          {supplier.location ||
+                            '-'}
+                        </td>
 
-                        <button
-                          type="button"
-                          className="supplier-action edit"
-                          onClick={() =>
-                            openEditSupplier(
-                              supplier,
-                            )
-                          }
-                        >
-                          Edit
-                        </button>
+                        {/* BALANCE */}
 
-                        <button
-                          type="button"
-                          className="supplier-action toggle"
-                          onClick={() =>
-                            toggleSupplierStatus(
-                              supplier,
-                            )
-                          }
-                        >
-                          {supplier.isActive
-                            ? 'Deactivate'
-                            : 'Activate'}
-                        </button>
+                        <td>
+                          <div className="supplier-balance-display">
 
-                        {/* DELETE ONLY WHEN BALANCE <= 0 */}
-                        {Number(
-                          supplier.balance || 0,
-                        ) <= 0 && (
-                          <button
-                            type="button"
-                            className="supplier-action delete"
-                            onClick={() =>
-                              deleteSupplier(
-                                supplier,
-                              )
-                            }
+                            <strong
+                              className={`supplier-balance ${balanceStatus.type}`}
+                            >
+                              {formatBalance(
+                                supplier.balance,
+                              )}
+                            </strong>
+
+                            <small
+                              className={`supplier-balance-label ${balanceStatus.type}`}
+                            >
+                              {
+                                balanceStatus.label
+                              }
+                            </small>
+
+                          </div>
+                        </td>
+
+                        {/* STATUS */}
+
+                        <td>
+                          <span
+                            className={`supplier-status ${
+                              supplier.isActive
+                                ? 'active'
+                                : 'inactive'
+                            }`}
                           >
-                            Delete
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                            {supplier.isActive
+                              ? 'Active'
+                              : 'Inactive'}
+                          </span>
+                        </td>
+
+                        {/* ACTIONS */}
+
+                        <td>
+                          <div className="supplier-actions">
+
+                            <button
+                              className="action-btn ledger-btn"
+                              onClick={() =>
+                                openLedger(
+                                  supplier,
+                                )
+                              }
+                            >
+                              Ledger
+                            </button>
+
+                            <button
+                              className="action-btn purchase-btn"
+                              onClick={() =>
+                                openPurchaseModal(
+                                  supplier,
+                                )
+                              }
+                              disabled={
+                                !supplier.isActive
+                              }
+                            >
+                              Purchase
+                            </button>
+
+                            <button
+                              className="action-btn payment-btn"
+                              onClick={() =>
+                                openPaymentModal(
+                                  supplier,
+                                )
+                              }
+                              disabled={
+                                !supplier.isActive
+                              }
+                            >
+                              Payment
+                            </button>
+
+                            <button
+                              className="action-btn edit-btn"
+                              onClick={() =>
+                                openEditSupplier(
+                                  supplier,
+                                )
+                              }
+                            >
+                              Edit
+                            </button>
+
+                            <button
+                              className="action-btn toggle-btn"
+                              onClick={() =>
+                                handleToggleSupplier(
+                                  supplier,
+                                )
+                              }
+                            >
+                              {supplier.isActive
+                                ? 'Deactivate'
+                                : 'Activate'}
+                            </button>
+
+                            {Number(
+                              supplier.balance ?? 0,
+                            ) === 0 && (
+                              <button
+                                className="action-btn delete-btn"
+                                onClick={() =>
+                                  handleDeleteSupplier(
+                                    supplier,
+                                  )
+                                }
+                              >
+                                Delete
+                              </button>
+                            )}
+
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  },
+                )}
               </tbody>
             </table>
           </div>
         )}
       </div>
 
-      {/* =================================================
+      {/* =====================================================
           EDIT SUPPLIER MODAL
-      ================================================= */}
+      ====================================================== */}
 
       {editingSupplier && (
-        <div
-          className="supplier-modal-overlay"
-          onClick={closeEditSupplier}
-        >
-          <div
-            className="supplier-modal"
-            onClick={(event) =>
-              event.stopPropagation()
-            }
-          >
-            <div className="supplier-modal-header">
+        <div className="modal-overlay">
+          <div className="supplier-modal">
+
+            <div className="modal-header">
               <div>
-                <h2>Edit Supplier</h2>
+                <h2>
+                  Edit Supplier
+                </h2>
+
                 <p>
-                  Update supplier name or location.
+                  Update supplier
+                  information
                 </p>
               </div>
 
               <button
-                type="button"
-                className="supplier-modal-close"
-                onClick={closeEditSupplier}
+                className="modal-close"
+                onClick={() =>
+                  setEditingSupplier(
+                    null,
+                  )
+                }
               >
                 ×
               </button>
             </div>
 
             <form
-              className="supplier-modal-form"
-              onSubmit={handleEditSupplier}
+              onSubmit={
+                handleUpdateSupplier
+              }
             >
-              <div className="supplier-field">
-                <label>Supplier Name</label>
+              <div className="form-group">
+                <label>
+                  Supplier Name
+                </label>
 
                 <input
                   type="text"
                   name="name"
-                  value={editForm.name}
-                  onChange={handleEditChange}
-                  placeholder="Supplier name"
+                  value={
+                    editForm.name
+                  }
+                  onChange={
+                    handleEditFormChange
+                  }
+                  required
                 />
               </div>
 
-              <div className="supplier-field">
+              <div className="form-group">
                 <label>
                   Location / Address
                 </label>
@@ -1350,27 +1589,35 @@ function Suppliers() {
                 <input
                   type="text"
                   name="location"
-                  value={editForm.location}
-                  onChange={handleEditChange}
-                  placeholder="Supplier address / location"
+                  value={
+                    editForm.location
+                  }
+                  onChange={
+                    handleEditFormChange
+                  }
+                  placeholder="Supplier location"
                 />
               </div>
 
-              <div className="supplier-modal-actions">
+              <div className="modal-actions">
                 <button
                   type="button"
-                  className="supplier-cancel-button"
-                  onClick={closeEditSupplier}
+                  className="secondary-btn"
+                  onClick={() =>
+                    setEditingSupplier(
+                      null,
+                    )
+                  }
                 >
                   Cancel
                 </button>
 
                 <button
                   type="submit"
-                  className="supplier-save-button"
-                  disabled={editLoading}
+                  className="primary-btn"
+                  disabled={loading}
                 >
-                  {editLoading
+                  {loading
                     ? 'Updating...'
                     : 'Update Supplier'}
                 </button>
@@ -1380,548 +1627,822 @@ function Suppliers() {
         </div>
       )}
 
-      {/* =================================================
-          SUPPLIER LEDGER MODAL
-      ================================================= */}
+      {/* =====================================================
+          LEDGER MODAL
+      ====================================================== */}
 
-      {selectedSupplier && (
-        <div
-          className="supplier-ledger-overlay"
-          onClick={closeLedger}
-        >
-          <div
-            className="supplier-ledger-modal"
-            onClick={(event) =>
-              event.stopPropagation()
-            }
-          >
-            <div className="supplier-ledger-header">
-              <div>
-                <h2>
-                  {selectedSupplier.name}
-                </h2>
-
-                <p>
-                  {selectedSupplier.location ||
-                    'No location specified'}
-                </p>
-              </div>
-
-              <button
-                type="button"
-                className="supplier-ledger-close"
-                onClick={closeLedger}
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="supplier-ledger-summary">
-              <div className="supplier-ledger-summary-card">
-                <span>Current Balance</span>
-
-                <strong>
-                  {formatAmount(
-                    ledgerBalance ??
-                      selectedSupplier.balance ??
-                      0,
-                  )}
-                </strong>
-              </div>
-
-              <div className="supplier-ledger-summary-actions">
-                <button
-                  type="button"
-                  className="supplier-purchase-button"
-                  onClick={openPurchaseModal}
-                >
-                  + Record Purchase
-                </button>
-
-                <button
-                  type="button"
-                  className="supplier-payment-button"
-                  onClick={openPaymentModal}
-                >
-                  + Record Payment
-                </button>
-              </div>
-            </div>
-
-            <div className="supplier-ledger-content">
-              <div className="supplier-ledger-title-row">
-                <div>
-                  <h3>Transaction Ledger</h3>
-
-                  <p>
-                    Click View to see complete transaction
-                    details.
-                  </p>
-                </div>
-              </div>
-
-              {ledgerLoading ? (
-                <div className="supplier-loading">
-                  Loading ledger...
-                </div>
-              ) : ledger.length === 0 ? (
-                <div className="supplier-empty">
-                  No transactions found for this
-                  supplier.
-                </div>
-              ) : (
-                <div className="supplier-table-wrapper">
-                  <table className="supplier-ledger-table">
-                    <thead>
-                      <tr>
-                        <th>Date</th>
-                        <th>Type</th>
-                        <th>Amount</th>
-                        <th>Balance</th>
-                        <th>Details</th>
-                      </tr>
-                    </thead>
-
-                    <tbody>
-                      {ledger.map(
-                        (transaction) => (
-                          <tr
-                            key={
-                              transaction._id
-                            }
-                            className="ledger-row-clickable"
-                          >
-                            <td>
-                              {formatDate(
-                                transaction.transactionDate ||
-                                  transaction.createdAt,
-                              )}
-                            </td>
-
-                            <td>
-                              <span
-                                className={`ledger-type ${
-                                  transaction.type ===
-                                  'purchase'
-                                    ? 'purchase'
-                                    : 'payment'
-                                }`}
-                              >
-                                {transaction.type ===
-                                'purchase'
-                                  ? 'Purchase'
-                                  : 'Payment'}
-                              </span>
-                            </td>
-
-                            <td>
-                              <strong>
-                                {formatAmount(
-                                  transaction.amount,
-                                )}
-                              </strong>
-                            </td>
-
-                            <td>
-                              {formatAmount(
-                                transaction.balanceAfter,
-                              )}
-                            </td>
-
-                            <td>
-                              <button
-                                type="button"
-                                className="ledger-view-button"
-                                onClick={() =>
-                                  viewTransaction(
-                                    transaction,
-                                  )
-                                }
-                              >
-                                View
-                              </button>
-                            </td>
-                          </tr>
-                        ),
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* =================================================
-          PURCHASE MODAL
-      ================================================= */}
-
-      {showPurchaseModal &&
+      {showLedger &&
         selectedSupplier && (
-          <div
-            className="supplier-transaction-overlay"
-            onClick={closePurchaseModal}
-          >
-            <div
-              className="supplier-transaction-modal purchase-modal"
-              onClick={(event) =>
-                event.stopPropagation()
-              }
-            >
-              <div className="supplier-ledger-header">
+          <div className="modal-overlay">
+            <div className="supplier-ledger-modal">
+
+              <div className="modal-header">
                 <div>
-                  <h2>Record Purchase</h2>
+                  <h2>
+                    {selectedSupplier.name}
+                    {' '}
+                    Ledger
+                  </h2>
 
                   <p>
-                    Supplier:{' '}
-                    <strong>
-                      {selectedSupplier.name}
-                    </strong>
+                    {selectedSupplier.location ||
+                      'No location added'}
                   </p>
                 </div>
 
                 <button
-                  type="button"
-                  className="supplier-ledger-close"
-                  onClick={closePurchaseModal}
-                  disabled={purchaseLoading}
+                  className="modal-close"
+                  onClick={
+                    closeLedger
+                  }
                 >
                   ×
                 </button>
               </div>
 
-              <form
-                className="supplier-transaction-form"
-                onSubmit={handlePurchaseSubmit}
-              >
-                <div className="supplier-transaction-info">
+              {/* CURRENT BALANCE */}
+
+              <div className="supplier-ledger-summary">
+
+                {(() => {
+                  const status =
+                    getBalanceStatus(
+                      ledgerBalance ??
+                        selectedSupplier.balance ??
+                        0,
+                    );
+
+                  return (
+                    <div className="supplier-ledger-summary-card">
+
+                      <span>
+                        {
+                          status.label
+                        }
+                      </span>
+
+                      <strong
+                        className={`ledger-current-balance ${status.type}`}
+                      >
+                        {formatBalance(
+                          ledgerBalance ??
+                            selectedSupplier.balance ??
+                            0,
+                        )}
+                      </strong>
+
+                      <small>
+                        {status.type ===
+                        'payable'
+                          ? 'Amount payable to supplier'
+                          : status.type ===
+                            'advance'
+                          ? 'Advance with supplier'
+                          : 'No outstanding balance'}
+                      </small>
+
+                    </div>
+                  );
+                })()}
+
+              </div>
+
+              {/* LEDGER ACTIONS */}
+
+              <div className="ledger-actions">
+
+                <button
+                  className="action-btn purchase-btn"
+                  onClick={() =>
+                    openPurchaseModal(
+                      selectedSupplier,
+                    )
+                  }
+                  disabled={
+                    !selectedSupplier.isActive
+                  }
+                >
+                  + Purchase
+                </button>
+
+                <button
+                  className="action-btn payment-btn"
+                  onClick={() =>
+                    openPaymentModal(
+                      selectedSupplier,
+                    )
+                  }
+                  disabled={
+                    !selectedSupplier.isActive
+                  }
+                >
+                  + Payment
+                </button>
+
+              </div>
+
+              {/* TRANSACTIONS */}
+
+              <div className="supplier-ledger-section">
+
+                <div className="ledger-section-header">
+                  <div>
+                    <h3>
+                      Transactions
+                    </h3>
+
+                    <span>
+                      {
+                        ledgerTransactions.length
+                      }{' '}
+                      transaction
+                      {ledgerTransactions.length !==
+                      1
+                        ? 's'
+                        : ''}
+                    </span>
+                  </div>
+                </div>
+
+                {ledgerLoading ? (
+                  <div className="supplier-loading">
+                    Loading ledger...
+                  </div>
+                ) : ledgerTransactions.length ===
+                  0 ? (
+                  <div className="supplier-empty">
+                    <h3>
+                      No transactions
+                    </h3>
+
+                    <p>
+                      No purchases or
+                      payments have been
+                      recorded for this
+                      supplier.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="table-responsive">
+                    <table className="ledger-table">
+                      <thead>
+                        <tr>
+                          <th>Date</th>
+                          <th>Type</th>
+                          <th>Amount</th>
+                          <th>Payment</th>
+                          <th>Balance After</th>
+                          <th>Details</th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        {ledgerTransactions.map(
+                          (
+                            transaction,
+                          ) => {
+                            const balanceStatus =
+                              getBalanceStatus(
+                                transaction.balanceAfter,
+                              );
+
+                            return (
+                              <tr
+                                key={
+                                  transaction._id
+                                }
+                              >
+                                <td>
+                                  {formatDate(
+                                    transaction.transactionDate ||
+                                      transaction.createdAt,
+                                  )}
+                                </td>
+
+                                <td>
+                                  <span
+                                    className={`transaction-type ${
+                                      transaction.type
+                                    }`}
+                                  >
+                                    {transaction.type ===
+                                    'purchase'
+                                      ? 'Purchase'
+                                      : 'Payment'}
+                                  </span>
+                                </td>
+
+                                <td>
+                                  <strong>
+                                    {formatAmount(
+                                      transaction.amount,
+                                    )}
+                                  </strong>
+                                </td>
+
+                                <td>
+                                  {transaction.paymentMethod
+                                    ? transaction.paymentMethod.toUpperCase()
+                                    : '-'}
+                                </td>
+
+                                <td>
+                                  <div className="ledger-balance-display">
+
+                                    <strong
+                                      className={`ledger-balance ${balanceStatus.type}`}
+                                    >
+                                      {formatBalance(
+                                        transaction.balanceAfter,
+                                      )}
+                                    </strong>
+
+                                    <small
+                                      className={`ledger-balance-label ${balanceStatus.type}`}
+                                    >
+                                      {
+                                        balanceStatus.label
+                                      }
+                                    </small>
+
+                                  </div>
+                                </td>
+
+                                <td>
+                                  <button
+                                    className="view-transaction-btn"
+                                    onClick={() =>
+                                      openTransactionDetails(
+                                        transaction,
+                                      )
+                                    }
+                                  >
+                                    View
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          },
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+              </div>
+
+            </div>
+          </div>
+        )}
+
+      {/* =====================================================
+          TRANSACTION DETAILS MODAL
+      ====================================================== */}
+
+      {showTransactionDetails &&
+        selectedTransaction && (
+          <div className="modal-overlay">
+
+            <div className="transaction-detail-modal">
+
+              {/* HEADER */}
+
+              <div className="modal-header">
+                <div>
+                  <h2>
+                    Transaction Details
+                  </h2>
+
+                  <p>
+                    {selectedTransaction.type ===
+                    'purchase'
+                      ? 'Purchase transaction'
+                      : 'Payment transaction'}
+                  </p>
+                </div>
+
+                <button
+                  className="modal-close"
+                  onClick={
+                    closeTransactionDetails
+                  }
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* TRANSACTION INFORMATION */}
+
+              <div className="transaction-detail-grid">
+
+                {/* DATE */}
+
+                <div>
                   <span>
-                    Purchase date is recorded automatically
-                    using the current date and time.
+                    Date
+                  </span>
+
+                  <strong>
+                    {formatDateTime(
+                      selectedTransaction.transactionDate ||
+                        selectedTransaction.createdAt,
+                    )}
+                  </strong>
+                </div>
+
+                {/* HISTORICAL SUPPLIER LOCATION */}
+
+                <div>
+                  <span>
+                    Supplier Location
+                  </span>
+
+                  <strong>
+                    {selectedTransaction.supplierLocation ||
+                      'No location recorded'}
+                  </strong>
+                </div>
+
+                {/* TYPE */}
+
+                <div>
+                  <span>
+                    Type
+                  </span>
+
+                  <strong>
+                    {selectedTransaction.type ===
+                    'purchase'
+                      ? 'Purchase'
+                      : 'Payment'}
+                  </strong>
+                </div>
+
+                {/* AMOUNT */}
+
+                <div>
+                  <span>
+                    Amount
+                  </span>
+
+                  <strong>
+                    {formatAmount(
+                      selectedTransaction.amount,
+                    )}
+                  </strong>
+                </div>
+
+                {/* PAYMENT METHOD */}
+
+                <div>
+                  <span>
+                    Payment Method
+                  </span>
+
+                  <strong>
+                    {selectedTransaction.paymentMethod
+                      ? selectedTransaction.paymentMethod.toUpperCase()
+                      : '-'}
+                  </strong>
+                </div>
+
+                {/* BALANCE BEFORE */}
+
+                <div>
+                  <span>
+                    {
+                      getBalanceStatus(
+                        selectedTransaction.balanceBefore,
+                      ).label
+                    }{' '}
+                    Before
+                  </span>
+
+                  <strong
+                    className={`ledger-balance ${
+                      getBalanceStatus(
+                        selectedTransaction.balanceBefore,
+                      ).type
+                    }`}
+                  >
+                    {formatBalance(
+                      selectedTransaction.balanceBefore,
+                    )}
+                  </strong>
+                </div>
+
+                {/* BALANCE AFTER */}
+
+                <div>
+                  <span>
+                    {
+                      getBalanceStatus(
+                        selectedTransaction.balanceAfter,
+                      ).label
+                    }{' '}
+                    After
+                  </span>
+
+                  <strong
+                    className={`ledger-balance ${
+                      getBalanceStatus(
+                        selectedTransaction.balanceAfter,
+                      ).type
+                    }`}
+                  >
+                    {formatBalance(
+                      selectedTransaction.balanceAfter,
+                    )}
+                  </strong>
+                </div>
+
+              </div>
+
+              {/* PURCHASE ITEMS */}
+
+              {selectedTransaction.type ===
+                'purchase' &&
+                selectedTransaction.items &&
+                selectedTransaction.items
+                  .length > 0 && (
+                  <div className="transaction-items-section">
+
+                    <h3>
+                      Purchased Dresses
+                    </h3>
+
+                    <div className="table-responsive">
+                      <table className="transaction-items-table">
+                        <thead>
+                          <tr>
+                            <th>
+                              Dress
+                            </th>
+
+                            <th>
+                              Brand
+                            </th>
+
+                            <th>
+                              Size
+                            </th>
+
+                            <th>
+                              Color
+                            </th>
+
+                            <th>
+                              Qty
+                            </th>
+
+                            <th>
+                              Price
+                            </th>
+
+                            <th>
+                              Subtotal
+                            </th>
+                          </tr>
+                        </thead>
+
+                        <tbody>
+                          {selectedTransaction.items.map(
+                            (
+                              item,
+                              index,
+                            ) => (
+                              <tr
+                                key={
+                                  item.productId ||
+                                  item.product ||
+                                  index
+                                }
+                              >
+                                <td>
+                                  {
+                                    item.dressName
+                                  }
+                                </td>
+
+                                <td>
+                                  {item.brand ||
+                                    '-'}
+                                </td>
+
+                                <td>
+                                  {item.size ||
+                                    '-'}
+                                </td>
+
+                                <td>
+                                  {item.color ||
+                                    '-'}
+                                </td>
+
+                                <td>
+                                  {
+                                    item.quantity
+                                  }
+                                </td>
+
+                                <td>
+                                  {formatAmount(
+                                    item.purchasePrice ??
+                                      item.price ??
+                                      0,
+                                  )}
+                                </td>
+
+                                <td>
+                                  {formatAmount(
+                                    item.subtotal ??
+                                      Number(
+                                        item.quantity ||
+                                          0,
+                                      ) *
+                                        Number(
+                                          item.purchasePrice ??
+                                            item.price ??
+                                            0,
+                                        ),
+                                  )}
+                                </td>
+                              </tr>
+                            ),
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+
+                  </div>
+                )}
+
+              {/* NOTE */}
+
+              {selectedTransaction.note && (
+                <div className="transaction-note">
+
+                  <span>
+                    Note
+                  </span>
+
+                  <p>
+                    {
+                      selectedTransaction.note
+                    }
+                  </p>
+
+                </div>
+              )}
+
+              {/* MODAL ACTIONS */}
+
+              <div className="modal-actions">
+
+                <button
+                  className="secondary-btn"
+                  onClick={
+                    closeTransactionDetails
+                  }
+                >
+                  Close
+                </button>
+
+              </div>
+
+            </div>
+          </div>
+        )}
+
+      {/* =====================================================
+          PURCHASE MODAL
+      ====================================================== */}
+
+      {showPurchaseModal &&
+        purchaseSupplier && (
+          <div className="modal-overlay">
+            <div className="purchase-modal">
+
+              <div className="modal-header">
+                <div>
+                  <h2>
+                    Record Purchase
+                  </h2>
+
+                  <p>
+                    Supplier:{' '}
+                    <strong>
+                      {
+                        purchaseSupplier.name
+                      }
+                    </strong>
+                  </p>
+                </div>
+
+                <button
+                  className="modal-close"
+                  onClick={
+                    closePurchaseModal
+                  }
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* CURRENT DATE / TIME */}
+
+              <div className="purchase-details-grid">
+
+                <div className="form-group">
+                  <label>
+                    Transaction Date & Time
+                  </label>
+
+                  <input
+                    type="text"
+                    value={formatDateTime(
+                      currentDateTime,
+                    )}
+                    readOnly
+                  />
+
+                  <small>
+                    Automatically recorded when
+                    you submit this purchase.
+                  </small>
+                </div>
+
+              </div>
+
+              {/* PRODUCT SEARCH */}
+
+              <div className="purchase-product-search">
+
+                <label>
+                  Search Product
+                </label>
+
+                <input
+                  type="text"
+                  value={
+                    productSearch
+                  }
+                  onChange={(e) =>
+                    setProductSearch(
+                      e.target.value,
+                    )
+                  }
+                  placeholder="Search by dress name, category, brand, size or color..."
+                />
+
+                {productSearch && (
+                  <div className="product-search-results">
+
+                    {productsLoading ? (
+                      <div className="product-search-loading">
+                        Loading products...
+                      </div>
+                    ) : filteredProducts.length ===
+                      0 ? (
+                      <div className="product-search-empty">
+                        No products found
+                      </div>
+                    ) : (
+                      filteredProducts.map(
+                        (product) => (
+                          <button
+                            type="button"
+                            className="product-search-item"
+                            key={
+                              product._id
+                            }
+                            onClick={() =>
+                              addProductToPurchase(
+                                product,
+                              )
+                            }
+                          >
+                            <div>
+                              <strong>
+                                {
+                                  product.dressName
+                                }
+                              </strong>
+
+                              <span>
+                                {product.brand ||
+                                  '-'}
+                                {' • '}
+                                {product.category ||
+                                  '-'}
+                              </span>
+                            </div>
+
+                            <div>
+                              <span>
+                                Size:{' '}
+                                {product.size ||
+                                  '-'}
+                              </span>
+
+                              <span>
+                                Color:{' '}
+                                {product.color ||
+                                  '-'}
+                              </span>
+                            </div>
+                          </button>
+                        ),
+                      )
+                    )}
+
+                  </div>
+                )}
+
+              </div>
+
+              {/* PURCHASE ITEMS */}
+
+              <div className="purchase-items-section">
+
+                <div className="purchase-items-header">
+                  <h3>
+                    Purchase Items
+                  </h3>
+
+                  <span>
+                    {
+                      purchaseItems.length
+                    }{' '}
+                    item
+                    {purchaseItems.length !==
+                    1
+                      ? 's'
+                      : ''}
                   </span>
                 </div>
 
-                <div className="purchase-items-header">
-                  <div>
-                    <h3>Purchased Dresses</h3>
-
-                    <p>
-                      Search by dress name, brand,
-                      category, size or color.
-                    </p>
+                {purchaseItems.length ===
+                0 ? (
+                  <div className="purchase-empty">
+                    Search and select
+                    products above to add
+                    them to this purchase.
                   </div>
+                ) : (
+                  <div className="purchase-items-list">
 
-                  <button
-                    type="button"
-                    className="supplier-add-item-button"
-                    onClick={addPurchaseItem}
-                    disabled={purchaseLoading}
-                  >
-                    + Add Item
-                  </button>
-                </div>
-
-                <div className="purchase-items-list">
-                  {purchaseForm.items.map(
-                    (item, index) => {
-                      const selectedProduct =
-                        products.find(
-                          (product) =>
-                            product._id ===
-                            item.productId,
-                        );
-
-                      const filteredProducts =
-                        getFilteredProducts(index);
-
-                      return (
+                    {purchaseItems.map(
+                      (item) => (
                         <div
                           className="purchase-item-row"
-                          key={index}
+                          key={
+                            item.productId
+                          }
                         >
-                          {/* PRODUCT SEARCH */}
-                          <div className="purchase-product-field">
-                            <label>
-                              Dress / Product
-                            </label>
 
-                            <div className="product-search-wrapper">
-                              <div className="product-search-input-row">
-                                <input
-                                  type="text"
-                                  className="product-search-input"
-                                  value={
-                                    item.searchTerm
-                                  }
-                                  onChange={(
-                                    event,
-                                  ) => {
-                                    handlePurchaseItemChange(
-                                      index,
-                                      'searchTerm',
-                                      event.target
-                                        .value,
-                                    );
+                          <div className="purchase-item-info">
+                            <strong>
+                              {
+                                item.dressName
+                              }
+                            </strong>
 
-                                    setOpenProductSearch(
-                                      index,
-                                    );
-                                  }}
-                                  onFocus={() => {
-                                    if (
-                                      !item.productId
-                                    ) {
-                                      setOpenProductSearch(
-                                        index,
-                                      );
-                                    }
-                                  }}
-                                  placeholder="Search dress name, brand, category..."
-                                  disabled={
-                                    purchaseLoading ||
-                                    productsLoading
-                                  }
-                                  autoComplete="off"
-                                />
-
-                                {item.productId && (
-                                  <button
-                                    type="button"
-                                    className="product-search-clear"
-                                    onClick={() =>
-                                      clearPurchaseProduct(
-                                        index,
-                                      )
-                                    }
-                                    disabled={
-                                      purchaseLoading
-                                    }
-                                    title="Clear product"
-                                  >
-                                    ×
-                                  </button>
-                                )}
-                              </div>
-
-                              {/* SEARCH RESULTS */}
-                              {openProductSearch ===
-                                index &&
-                                !item.productId &&
-                                item.searchTerm.trim() && (
-                                  <div className="product-search-results">
-                                    {productsLoading ? (
-                                      <div className="product-search-status">
-                                        Loading products...
-                                      </div>
-                                    ) : filteredProducts.length ===
-                                      0 ? (
-                                      <div className="product-search-status">
-                                        No matching dresses
-                                        found.
-                                      </div>
-                                    ) : (
-                                      <>
-                                        {filteredProducts.map(
-                                          (
-                                            product,
-                                          ) => (
-                                            <button
-                                              type="button"
-                                              className="product-search-result"
-                                              key={
-                                                product._id
-                                              }
-                                              onClick={() =>
-                                                selectPurchaseProduct(
-                                                  index,
-                                                  product,
-                                                )
-                                              }
-                                            >
-                                              <span className="product-search-result-main">
-                                                <strong>
-                                                  {
-                                                    product.dressName
-                                                  }
-                                                </strong>
-
-                                                <small>
-                                                  {product.brand ||
-                                                    'No brand'}
-                                                </small>
-                                              </span>
-
-                                              <span className="product-search-result-meta">
-                                                {product.category && (
-                                                  <span>
-                                                    {
-                                                      product.category
-                                                    }
-                                                  </span>
-                                                )}
-
-                                                {product.size && (
-                                                  <span>
-                                                    Size:{' '}
-                                                    {
-                                                      product.size
-                                                    }
-                                                  </span>
-                                                )}
-
-                                                {product.color && (
-                                                  <span>
-                                                    Color:{' '}
-                                                    {
-                                                      product.color
-                                                    }
-                                                  </span>
-                                                )}
-
-                                                <span>
-                                                  Stock:{' '}
-                                                  {Number(
-                                                    product.stockQuantity ||
-                                                      0,
-                                                  )}
-                                                </span>
-
-                                                {product.purchasePrice !==
-                                                  undefined &&
-                                                  product.purchasePrice !==
-                                                    null && (
-                                                    <span>
-                                                      Purchase:{' '}
-                                                      {formatAmount(
-                                                        product.purchasePrice,
-                                                      )}
-                                                    </span>
-                                                  )}
-                                              </span>
-                                            </button>
-                                          ),
-                                        )}
-
-                                        {products.filter(
-                                          (product) => {
-                                            const text =
-                                              [
-                                                product.dressName,
-                                                product.brand,
-                                                product.category,
-                                                product.size,
-                                                product.color,
-                                              ]
-                                                .filter(
-                                                  Boolean,
-                                                )
-                                                .join(
-                                                  ' ',
-                                                )
-                                                .toLowerCase();
-
-                                            return text.includes(
-                                              item.searchTerm
-                                                .trim()
-                                                .toLowerCase(),
-                                            );
-                                          },
-                                        ).length >
-                                          50 && (
-                                          <div className="product-search-more">
-                                            Showing first 50
-                                            matches. Refine
-                                            your search for a
-                                            specific dress.
-                                          </div>
-                                        )}
-                                      </>
-                                    )}
-                                  </div>
-                                )}
-                            </div>
-
-                            {/* SELECTED PRODUCT INFO */}
-                            {selectedProduct && (
-                              <div className="product-search-selected">
-                                <div>
-                                  <strong>
-                                    {
-                                      selectedProduct.dressName
-                                    }
-                                  </strong>
-
-                                  <span>
-                                    {selectedProduct.brand ||
-                                      'No brand'}
-                                  </span>
-                                </div>
-
-                                <div className="product-selected-meta">
-                                  {selectedProduct.category && (
-                                    <span>
-                                      {
-                                        selectedProduct.category
-                                      }
-                                    </span>
-                                  )}
-
-                                  {selectedProduct.size && (
-                                    <span>
-                                      Size:{' '}
-                                      {
-                                        selectedProduct.size
-                                      }
-                                    </span>
-                                  )}
-
-                                  {selectedProduct.color && (
-                                    <span>
-                                      Color:{' '}
-                                      {
-                                        selectedProduct.color
-                                      }
-                                    </span>
-                                  )}
-
-                                  <span>
-                                    Current Stock:{' '}
-                                    {Number(
-                                      selectedProduct.stockQuantity ||
-                                        0,
-                                    )}
-                                  </span>
-                                </div>
-                              </div>
-                            )}
+                            <span>
+                              {item.brand ||
+                                '-'}
+                              {' • '}
+                              {item.size ||
+                                '-'}
+                              {' • '}
+                              {item.color ||
+                                '-'}
+                            </span>
                           </div>
 
-                          {/* QUANTITY */}
-                          <div className="purchase-quantity-field">
-                            <label>Quantity</label>
+                          <div className="purchase-item-field">
+                            <label>
+                              Qty
+                            </label>
 
                             <input
                               type="number"
                               min="1"
-                              step="1"
-                              value={item.quantity}
-                              onChange={(event) =>
-                                handlePurchaseItemChange(
-                                  index,
+                              value={
+                                item.quantity
+                              }
+                              onChange={(e) =>
+                                updatePurchaseItem(
+                                  item.productId,
                                   'quantity',
-                                  event.target
+                                  e.target
                                     .value,
                                 )
-                              }
-                              disabled={
-                                purchaseLoading
                               }
                             />
                           </div>
 
-                          {/* PURCHASE PRICE */}
-                          <div className="purchase-price-field">
+                          <div className="purchase-item-field">
                             <label>
                               Purchase Price
                             </label>
@@ -1933,187 +2454,267 @@ function Suppliers() {
                               value={
                                 item.purchasePrice
                               }
-                              onChange={(event) =>
-                                handlePurchaseItemChange(
-                                  index,
+                              onChange={(e) =>
+                                updatePurchaseItem(
+                                  item.productId,
                                   'purchasePrice',
-                                  event.target
+                                  e.target
                                     .value,
                                 )
-                              }
-                              placeholder="0"
-                              disabled={
-                                purchaseLoading
                               }
                             />
                           </div>
 
-                          {/* SUBTOTAL */}
                           <div className="purchase-item-subtotal">
-                            <label>Subtotal</label>
+                            <span>
+                              Subtotal
+                            </span>
 
                             <strong>
                               {formatAmount(
-                                getPurchaseItemSubtotal(
-                                  item,
-                                ),
+                                Number(
+                                  item.quantity ||
+                                    0,
+                                ) *
+                                  Number(
+                                    item.purchasePrice ||
+                                      0,
+                                  ),
                               )}
                             </strong>
                           </div>
 
-                          {/* REMOVE */}
                           <button
                             type="button"
-                            className="purchase-remove-item"
+                            className="remove-purchase-item"
                             onClick={() =>
                               removePurchaseItem(
-                                index,
+                                item.productId,
                               )
                             }
-                            disabled={
-                              purchaseLoading ||
-                              purchaseForm.items
-                                .length === 1
-                            }
-                            title="Remove item"
                           >
                             ×
                           </button>
+
                         </div>
-                      );
-                    })}
-                </div>
+                      ),
+                    )}
 
-                {/* NOTE */}
-                <div className="supplier-field purchase-note-field">
-                  <label>Note</label>
+                  </div>
+                )}
 
-                  <textarea
-                    value={purchaseForm.note}
-                    onChange={
-                      handlePurchaseNoteChange
+              </div>
+
+              {/* PURCHASE DETAILS */}
+
+              <div className="purchase-details-grid">
+
+                <div className="form-group">
+                  <label>
+                    Note
+                  </label>
+
+                  <input
+                    type="text"
+                    value={
+                      purchaseNote
                     }
-                    placeholder="Optional purchase note..."
-                    rows="3"
-                    disabled={purchaseLoading}
+                    onChange={(e) =>
+                      setPurchaseNote(
+                        e.target.value,
+                      )
+                    }
+                    placeholder="Optional note"
                   />
                 </div>
 
-                {/* TOTAL */}
-                <div className="purchase-total-box">
-                  <span>Total Purchase</span>
+              </div>
 
-                  <strong>
-                    {formatAmount(
-                      getPurchaseTotal(),
-                    )}
-                  </strong>
-                </div>
+              {/* TOTAL */}
 
-                <div className="supplier-transaction-actions">
-                  <button
-                    type="button"
-                    className="supplier-cancel-button"
-                    onClick={closePurchaseModal}
-                    disabled={purchaseLoading}
-                  >
-                    Cancel
-                  </button>
+              <div className="purchase-total">
+                <span>
+                  Total Purchase
+                </span>
 
-                  <button
-                    type="submit"
-                    className="supplier-save-button"
-                    disabled={purchaseLoading}
-                  >
-                    {purchaseLoading
-                      ? 'Recording...'
-                      : 'Record Purchase'}
-                  </button>
-                </div>
-              </form>
+                <strong>
+                  {formatAmount(
+                    purchaseTotal,
+                  )}
+                </strong>
+              </div>
+
+              {/* ACTIONS */}
+
+              <div className="modal-actions">
+
+                <button
+                  type="button"
+                  className="secondary-btn"
+                  onClick={
+                    closePurchaseModal
+                  }
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  className="primary-btn"
+                  onClick={
+                    handleCreatePurchase
+                  }
+                  disabled={
+                    loading ||
+                    purchaseItems.length ===
+                      0
+                  }
+                >
+                  {loading
+                    ? 'Saving...'
+                    : 'Record Purchase'}
+                </button>
+
+              </div>
+
             </div>
           </div>
         )}
 
-      {/* =================================================
+      {/* =====================================================
           PAYMENT MODAL
-      ================================================= */}
+      ====================================================== */}
 
       {showPaymentModal &&
-        selectedSupplier && (
-          <div
-            className="supplier-transaction-overlay"
-            onClick={closePaymentModal}
-          >
-            <div
-              className="supplier-payment-modal"
-              onClick={(event) =>
-                event.stopPropagation()
-              }
-            >
-              <div className="supplier-ledger-header">
+        paymentSupplier && (
+          <div className="modal-overlay">
+            <div className="payment-modal">
+
+              <div className="modal-header">
                 <div>
-                  <h2>Record Payment</h2>
+                  <h2>
+                    Record Payment
+                  </h2>
 
                   <p>
                     Supplier:{' '}
                     <strong>
-                      {selectedSupplier.name}
+                      {
+                        paymentSupplier.name
+                      }
                     </strong>
                   </p>
                 </div>
 
                 <button
-                  type="button"
-                  className="supplier-ledger-close"
-                  onClick={closePaymentModal}
-                  disabled={paymentLoading}
+                  className="modal-close"
+                  onClick={
+                    closePaymentModal
+                  }
                 >
                   ×
                 </button>
               </div>
 
-              <form
-                className="supplier-transaction-form"
-                onSubmit={handlePaymentSubmit}
-              >
-                <div className="payment-current-balance">
-                  <span>Current Balance</span>
+              {/* CURRENT BALANCE */}
 
-                  <strong>
-                    {formatAmount(
-                      ledgerBalance ??
-                        selectedSupplier.balance ??
-                        0,
+              {(() => {
+                const status =
+                  getBalanceStatus(
+                    paymentSupplier.balance ??
+                      0,
+                  );
+
+                return (
+                  <div className="payment-current-balance">
+
+                    <span>
+                      Current{' '}
+                      {
+                        status.label
+                      }
+                    </span>
+
+                    <strong
+                      className={
+                        status.type
+                      }
+                    >
+                      {formatBalance(
+                        paymentSupplier.balance ??
+                          0,
+                      )}
+                    </strong>
+
+                  </div>
+                );
+              })()}
+
+              {/* CURRENT DATE / TIME */}
+
+              <div className="purchase-details-grid">
+
+                <div className="form-group">
+                  <label>
+                    Transaction Date & Time
+                  </label>
+
+                  <input
+                    type="text"
+                    value={formatDateTime(
+                      currentDateTime,
                     )}
-                  </strong>
+                    readOnly
+                  />
+
+                  <small>
+                    Automatically recorded when
+                    you submit this payment.
+                  </small>
                 </div>
 
-                <div className="supplier-field">
-                  <label>Payment Amount</label>
+              </div>
+
+              <form
+                onSubmit={
+                  handleCreatePayment
+                }
+              >
+
+                <div className="form-group">
+                  <label>
+                    Payment Amount
+                  </label>
 
                   <input
                     type="number"
                     name="amount"
+                    value={
+                      paymentForm.amount
+                    }
+                    onChange={
+                      handlePaymentFormChange
+                    }
+                    placeholder="Enter payment amount"
                     min="0.01"
                     step="0.01"
-                    value={paymentForm.amount}
-                    onChange={handlePaymentChange}
-                    placeholder="Enter payment amount"
-                    disabled={paymentLoading}
+                    required
                   />
                 </div>
 
-                <div className="supplier-field">
-                  <label>Payment Method</label>
+                <div className="form-group">
+                  <label>
+                    Payment Method
+                  </label>
 
                   <select
                     name="paymentMethod"
                     value={
                       paymentForm.paymentMethod
                     }
-                    onChange={handlePaymentChange}
-                    disabled={paymentLoading}
+                    onChange={
+                      handlePaymentFormChange
+                    }
                   >
                     <option value="cash">
                       Cash
@@ -2129,266 +2730,68 @@ function Suppliers() {
                   </select>
                 </div>
 
-                <div className="supplier-field">
-                  <label>Note</label>
+                <div className="form-group">
+                  <label>
+                    Note
+                  </label>
 
-                  <textarea
+                  <input
+                    type="text"
                     name="note"
-                    value={paymentForm.note}
-                    onChange={handlePaymentChange}
-                    placeholder="Optional payment note..."
-                    rows="3"
-                    disabled={paymentLoading}
+                    value={
+                      paymentForm.note
+                    }
+                    onChange={
+                      handlePaymentFormChange
+                    }
+                    placeholder="Optional note"
                   />
                 </div>
 
                 <div className="payment-info">
-                  Payment will reduce the supplier's
-                  outstanding balance.
+                  Payment will reduce the
+                  supplier's outstanding
+                  balance. If you pay more
+                  than the current balance,
+                  the extra amount will be
+                  recorded as a supplier
+                  advance and will
+                  automatically be adjusted
+                  against future purchases.
                 </div>
 
-                <div className="supplier-transaction-actions">
+                <div className="modal-actions">
+
                   <button
                     type="button"
-                    className="supplier-cancel-button"
-                    onClick={closePaymentModal}
-                    disabled={paymentLoading}
+                    className="secondary-btn"
+                    onClick={
+                      closePaymentModal
+                    }
                   >
                     Cancel
                   </button>
 
                   <button
                     type="submit"
-                    className="supplier-save-button"
-                    disabled={paymentLoading}
+                    className="primary-btn"
+                    disabled={
+                      paymentLoading
+                    }
                   >
                     {paymentLoading
-                      ? 'Recording...'
+                      ? 'Saving...'
                       : 'Record Payment'}
                   </button>
+
                 </div>
+
               </form>
+
             </div>
           </div>
         )}
 
-      {/* =================================================
-          TRANSACTION DETAIL MODAL
-      ================================================= */}
-
-      {selectedTransaction && (
-        <div
-          className="supplier-transaction-detail-overlay"
-          onClick={closeTransaction}
-        >
-          <div
-            className="supplier-transaction-detail-modal"
-            onClick={(event) =>
-              event.stopPropagation()
-            }
-          >
-            <div className="supplier-ledger-header">
-              <div>
-                <h2>
-                  {selectedTransaction.type ===
-                  'purchase'
-                    ? 'Purchase Details'
-                    : 'Payment Details'}
-                </h2>
-
-                <p>
-                  {formatDateTime(
-                    selectedTransaction.transactionDate ||
-                      selectedTransaction.createdAt,
-                  )}
-                </p>
-              </div>
-
-              <button
-                type="button"
-                className="supplier-ledger-close"
-                onClick={closeTransaction}
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="transaction-detail-grid">
-              <div className="transaction-detail-card">
-                <span>Supplier</span>
-
-                <strong>
-                  {
-                    selectedTransaction.supplierName
-                  }
-                </strong>
-              </div>
-
-              <div className="transaction-detail-card">
-                <span>Location</span>
-
-                <strong>
-                  {selectedTransaction.supplierLocation ||
-                    '—'}
-                </strong>
-              </div>
-
-              <div className="transaction-detail-card">
-                <span>Transaction Type</span>
-
-                <strong>
-                  {selectedTransaction.type ===
-                  'purchase'
-                    ? 'Purchase'
-                    : 'Payment'}
-                </strong>
-              </div>
-
-              <div className="transaction-detail-card">
-                <span>Amount</span>
-
-                <strong>
-                  {formatAmount(
-                    selectedTransaction.amount,
-                  )}
-                </strong>
-              </div>
-            </div>
-
-            <div className="transaction-balance-section">
-              <div>
-                <span>Balance Before</span>
-
-                <strong>
-                  {formatAmount(
-                    selectedTransaction.balanceBefore,
-                  )}
-                </strong>
-              </div>
-
-              <div>
-                <span>Balance After</span>
-
-                <strong>
-                  {formatAmount(
-                    selectedTransaction.balanceAfter,
-                  )}
-                </strong>
-              </div>
-            </div>
-
-            {/* PURCHASE DETAILS */}
-            {selectedTransaction.type ===
-              'purchase' && (
-              <div className="transaction-items-section">
-                <h3 className="transaction-section-title">
-                  Purchased Items
-                </h3>
-
-                {selectedTransaction.items?.length ? (
-                  <div className="supplier-table-wrapper">
-                    <table className="transaction-items-table">
-                      <thead>
-                        <tr>
-                          <th>Dress</th>
-                          <th>Quantity</th>
-                          <th>Purchase Price</th>
-                          <th>Subtotal</th>
-                        </tr>
-                      </thead>
-
-                      <tbody>
-                        {selectedTransaction.items.map(
-                          (item, index) => (
-                            <tr
-                              key={
-                                item._id ||
-                                `${item.product}-${index}`
-                              }
-                            >
-                              <td>
-                                <strong>
-                                  {
-                                    item.dressName
-                                  }
-                                </strong>
-                              </td>
-
-                              <td>
-                                {item.quantity}
-                              </td>
-
-                              <td>
-                                {formatAmount(
-                                  item.purchasePrice,
-                                )}
-                              </td>
-
-                              <td>
-                                <strong>
-                                  {formatAmount(
-                                    item.subtotal,
-                                  )}
-                                </strong>
-                              </td>
-                            </tr>
-                          ),
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <div className="supplier-empty">
-                    No purchase items found.
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* PAYMENT DETAILS */}
-            {selectedTransaction.type ===
-              'payment' && (
-              <div className="transaction-payment-section">
-                <div className="transaction-info-row">
-                  <span>Payment Method</span>
-
-                  <strong>
-                    {selectedTransaction.paymentMethod
-                      ? selectedTransaction.paymentMethod
-                          .charAt(0)
-                          .toUpperCase() +
-                        selectedTransaction.paymentMethod.slice(
-                          1,
-                        )
-                      : '—'}
-                  </strong>
-                </div>
-              </div>
-            )}
-
-            {/* NOTE */}
-            {selectedTransaction.note && (
-              <div className="transaction-note">
-                <span>Note</span>
-
-                <p>
-                  {selectedTransaction.note}
-                </p>
-              </div>
-            )}
-
-            <div className="transaction-detail-actions">
-              <button
-                type="button"
-                className="supplier-cancel-button"
-                onClick={closeTransaction}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

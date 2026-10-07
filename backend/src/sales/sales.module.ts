@@ -8,6 +8,11 @@ import {
 } from './schemas/sale.schema';
 
 import {
+  ReturnExchange,
+  ReturnExchangeSchema,
+} from './schemas/return-exchange.schema';
+
+import {
   Product,
   ProductSchema,
 } from '../products/schemas/product.schema';
@@ -23,6 +28,10 @@ import { AuthModule } from '../auth/auth.module';
       {
         name: Sale.name,
         schema: SaleSchema,
+      },
+      {
+        name: ReturnExchange.name,
+        schema: ReturnExchangeSchema,
       },
       {
         name: Product.name,

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../api/api';
+import '../styles/Receipt.css';
+
 
 function Receipt() {
   const { id } = useParams();
@@ -74,7 +76,7 @@ function Receipt() {
             <span>0315-3039460</span>
           </p>
 
-          <div className="receipt-heading-line"></div>
+        <div className="receipt-divider"></div>
 
           <h2>SALES RECEIPT</h2>
 
@@ -255,7 +257,6 @@ function Receipt() {
             Facebook: Glam By HH
           </p>
 
-          <div className="receipt-footer-line"></div>
 
           <p className="receipt-developed">
             Developed by Taha Siddique

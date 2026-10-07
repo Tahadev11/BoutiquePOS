@@ -18,14 +18,44 @@ export class SupplierPurchaseItem {
   product: Types.ObjectId;
 
   // Product name at the time of purchase.
-  // This preserves historical data even if the product
-  // name is changed later.
   @Prop({
     type: String,
     required: true,
     trim: true,
   })
   dressName: string;
+
+  // Brand at the time of purchase.
+  @Prop({
+    type: String,
+    trim: true,
+    default: '',
+  })
+  brand: string;
+
+  // Category at the time of purchase.
+  @Prop({
+    type: String,
+    trim: true,
+    default: '',
+  })
+  category: string;
+
+  // Size at the time of purchase.
+  @Prop({
+    type: String,
+    trim: true,
+    default: '',
+  })
+  size: string;
+
+  // Color at the time of purchase.
+  @Prop({
+    type: String,
+    trim: true,
+    default: '',
+  })
+  color: string;
 
   @Prop({
     type: Number,
@@ -35,7 +65,6 @@ export class SupplierPurchaseItem {
   quantity: number;
 
   // Purchase price at the time of purchase.
-  // This is NOT taken from the product later.
   @Prop({
     type: Number,
     required: true,
@@ -76,9 +105,6 @@ export class SupplierTransaction {
   // SUPPLIER SNAPSHOT
   // ==========================================================
 
-  // Supplier name at the time of transaction.
-  // This keeps old ledger records accurate if the supplier
-  // name is changed later.
   @Prop({
     type: String,
     required: true,
@@ -86,7 +112,6 @@ export class SupplierTransaction {
   })
   supplierName: string;
 
-  // Supplier location at the time of transaction.
   @Prop({
     type: String,
     trim: true,
@@ -97,14 +122,20 @@ export class SupplierTransaction {
   // ==========================================================
   // TRANSACTION DATE
   // ==========================================================
+  //
+  // The frontend may provide a transaction date.
+  //
+  // If no date is provided, MongoDB/backend will use
+  // the current date automatically.
+  //
+  // This allows the user to record an older purchase
+  // or payment using its actual transaction date.
+  // ==========================================================
 
-  // Allows us to know the exact date/time of the transaction.
-  // `createdAt` is also available because timestamps are enabled,
-  // but this field allows us to support a custom purchase date
-  // later if needed.
   @Prop({
     type: Date,
     default: Date.now,
+    required: true,
     index: true,
   })
   transactionDate: Date;
@@ -124,6 +155,18 @@ export class SupplierTransaction {
   // ==========================================================
   // TRANSACTION AMOUNT
   // ==========================================================
+  //
+  // Always positive.
+  //
+  // Purchase amount:
+  //   Amount of stock purchased.
+  //
+  // Payment amount:
+  //   Amount paid to supplier.
+  //
+  // The direction of the transaction is determined
+  // by the transaction type, not by this amount.
+  // ==========================================================
 
   @Prop({
     type: Number,
@@ -135,11 +178,17 @@ export class SupplierTransaction {
   // ==========================================================
   // BALANCE BEFORE TRANSACTION
   // ==========================================================
+  //
+  // Negative values are intentionally allowed.
+  //
+  // Positive = amount payable to supplier.
+  // Zero     = settled.
+  // Negative = advance with supplier.
+  // ==========================================================
 
   @Prop({
     type: Number,
     required: true,
-    min: 0,
   })
   balanceBefore: number;
 
@@ -147,21 +196,6 @@ export class SupplierTransaction {
   // PURCHASE ITEMS
   // ==========================================================
 
-  // Only purchase transactions contain items.
-  //
-  // Example:
-  //
-  // [
-  //   {
-  //     dressName: "Embroidered Lawn Dress",
-  //     quantity: 3,
-  //     purchasePrice: 2500,
-  //     subtotal: 7500
-  //   }
-  // ]
-  //
-  // This allows the ledger to show exactly which dresses
-  // were purchased on a previous date.
   @Prop({
     type: [SupplierPurchaseItemSchema],
     default: [],
@@ -172,7 +206,6 @@ export class SupplierTransaction {
   // PAYMENT METHOD
   // ==========================================================
 
-  // Only payment transactions normally contain this.
   @Prop({
     type: String,
     enum: ['cash', 'bank', 'card'],
@@ -192,11 +225,22 @@ export class SupplierTransaction {
   // ==========================================================
   // BALANCE AFTER TRANSACTION
   // ==========================================================
+  //
+  // Negative values are intentionally allowed.
+  //
+  // Example:
+  //
+  // Balance Before = 50,000
+  // Payment        = 60,000
+  // Balance After  = -10,000
+  //
+  // This means Rs. 10,000 is an advance with
+  // the supplier.
+  // ==========================================================
 
   @Prop({
     type: Number,
     required: true,
-    min: 0,
   })
   balanceAfter: number;
 }
@@ -212,13 +256,11 @@ export const SupplierTransactionSchema =
 // INDEXES
 // ============================================================
 
-// Makes supplier ledger queries faster.
 SupplierTransactionSchema.index({
   supplier: 1,
   transactionDate: -1,
 });
 
-// Makes transaction-type filtering faster.
 SupplierTransactionSchema.index({
   supplier: 1,
   type: 1,

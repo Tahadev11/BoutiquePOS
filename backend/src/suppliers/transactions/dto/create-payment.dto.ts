@@ -20,7 +20,6 @@ export class CreatePaymentDto {
   @IsString()
   note?: string;
 
-  // Actual date on which the payment happened
   @IsOptional()
   @IsDateString()
   transactionDate?: string;

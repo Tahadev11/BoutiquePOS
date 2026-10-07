@@ -35,7 +35,6 @@ export class CreatePurchaseDto {
   @IsString()
   note?: string;
 
-  // Actual date on which the purchase happened
   @IsOptional()
   @IsDateString()
   transactionDate?: string;
