@@ -10,6 +10,9 @@ function Suppliers() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
+  // Supplier Search State
+  const [searchTerm, setSearchTerm] = useState('');
+
   // Current date/time display
   const [currentDateTime, setCurrentDateTime] =
     useState(new Date());
@@ -139,7 +142,7 @@ function Suppliers() {
         Array.isArray(backendMessage)
           ? backendMessage.join(', ')
           : backendMessage ||
-              'Failed to load suppliers',
+          'Failed to load suppliers',
       );
 
       return [];
@@ -153,17 +156,38 @@ function Suppliers() {
   }, []);
 
   // =========================================================
+  // FILTERED SUPPLIERS & TOTAL BALANCE COMPUTATION
+  // =========================================================
+
+  const filteredSuppliers = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return suppliers;
+
+    return suppliers.filter(
+      (supplier) =>
+        supplier.name?.toLowerCase().includes(term) ||
+        supplier.location?.toLowerCase().includes(term)
+    );
+  }, [suppliers, searchTerm]);
+
+  const totalBalance = useMemo(() => {
+    return filteredSuppliers.reduce(
+      (acc, supplier) => acc + Number(supplier.balance ?? 0),
+      0
+    );
+  }, [filteredSuppliers]);
+
+  // =========================================================
   // FORMATTING
   // =========================================================
 
   const formatAmount = (amount) => {
     const value = Number(amount ?? 0);
 
-    return `Rs. ${
-      Number.isFinite(value)
-        ? Math.abs(value).toLocaleString('en-PK')
-        : '0'
-    }`;
+    return `Rs. ${Number.isFinite(value)
+      ? Math.abs(value).toLocaleString('en-PK')
+      : '0'
+      }`;
   };
 
   const formatDate = (date) => {
@@ -201,19 +225,6 @@ function Suppliers() {
   // =========================================================
   // SUPPLIER BALANCE STATUS
   // =========================================================
-
-  /*
-    Supplier balance meaning:
-
-    Positive:
-      You owe money to the supplier.
-
-    Zero:
-      Supplier is fully settled.
-
-    Negative:
-      You have an advance/credit with the supplier.
-  */
 
   const getBalanceStatus = (balance) => {
     const amount = Number(balance ?? 0);
@@ -296,11 +307,6 @@ function Suppliers() {
           supplierForm.location.trim(),
       };
 
-      /*
-        Backend DTO expects "balance",
-        not "openingBalance".
-      */
-
       if (
         supplierForm.openingBalance !== '' &&
         supplierForm.openingBalance !== null
@@ -346,7 +352,7 @@ function Suppliers() {
         Array.isArray(backendMessage)
           ? backendMessage.join(', ')
           : backendMessage ||
-              'Failed to add supplier',
+          'Failed to add supplier',
       );
     } finally {
       setLoading(false);
@@ -429,7 +435,7 @@ function Suppliers() {
         Array.isArray(backendMessage)
           ? backendMessage.join(', ')
           : backendMessage ||
-              'Failed to update supplier',
+          'Failed to update supplier',
       );
     } finally {
       setLoading(false);
@@ -479,7 +485,7 @@ function Suppliers() {
         Array.isArray(backendMessage)
           ? backendMessage.join(', ')
           : backendMessage ||
-              'Failed to update supplier status',
+          'Failed to update supplier status',
       );
     } finally {
       setLoading(false);
@@ -496,16 +502,6 @@ function Suppliers() {
     const balance = Number(
       supplier.balance ?? 0,
     );
-
-    /*
-      Supplier can ONLY be deleted when
-      the account is completely settled.
-
-      Positive balance = payable
-      Negative balance = advance
-
-      Both must be cleared before deletion.
-    */
 
     if (balance !== 0) {
       setMessage(
@@ -556,7 +552,7 @@ function Suppliers() {
         Array.isArray(backendMessage)
           ? backendMessage.join(', ')
           : backendMessage ||
-              'Failed to delete supplier',
+          'Failed to delete supplier',
       );
     } finally {
       setLoading(false);
@@ -620,7 +616,7 @@ function Suppliers() {
         Array.isArray(backendMessage)
           ? backendMessage.join(', ')
           : backendMessage ||
-              'Failed to load supplier ledger',
+          'Failed to load supplier ledger',
       );
     } finally {
       setLedgerLoading(false);
@@ -681,7 +677,7 @@ function Suppliers() {
         Array.isArray(backendMessage)
           ? backendMessage.join(', ')
           : backendMessage ||
-              'Failed to load products',
+          'Failed to load products',
       );
     } finally {
       setProductsLoading(false);
@@ -794,8 +790,6 @@ function Suppliers() {
         color:
           product.color || '',
         quantity: 1,
-
-        // Wholesale / purchase price
         purchasePrice: Number(
           product.purchasePrice || 0,
         ),
@@ -815,15 +809,15 @@ function Suppliers() {
       prev.map((item) =>
         item.productId === productId
           ? {
-              ...item,
-              [field]:
+            ...item,
+            [field]:
+              field ===
+                'quantity' ||
                 field ===
-                  'quantity' ||
-                field ===
-                  'purchasePrice'
-                  ? value
-                  : value,
-            }
+                'purchasePrice'
+                ? value
+                : value,
+          }
           : item,
       ),
     );
@@ -934,15 +928,6 @@ function Suppliers() {
           purchaseNote.trim();
       }
 
-      /*
-        Transaction date is NOT sent
-        from the frontend.
-
-        Backend automatically records
-        the actual current date/time
-        when the purchase is submitted.
-      */
-
       await api.post(
         `/suppliers/${purchaseSupplier._id}/purchases`,
         payload,
@@ -955,7 +940,7 @@ function Suppliers() {
       if (
         selectedSupplier &&
         selectedSupplier._id ===
-          purchaseSupplier._id
+        purchaseSupplier._id
       ) {
         const freshSupplier =
           await api.get(
@@ -988,7 +973,7 @@ function Suppliers() {
         Array.isArray(backendMessage)
           ? backendMessage.join(', ')
           : backendMessage ||
-              'Failed to record purchase',
+          'Failed to record purchase',
       );
     } finally {
       setLoading(false);
@@ -1060,28 +1045,6 @@ function Suppliers() {
       return;
     }
 
-    /*
-      IMPORTANT:
-
-      Overpayment is intentionally allowed.
-
-      Example:
-
-      Current balance = Rs. 50,000
-      Payment = Rs. 60,000
-
-      New balance:
-
-      50,000 - 60,000
-      = -10,000
-
-      Negative balance means:
-      Rs. 10,000 advance with supplier.
-
-      Future purchases automatically
-      consume this advance.
-    */
-
     try {
       setPaymentLoading(true);
       setMessage('');
@@ -1099,15 +1062,6 @@ function Suppliers() {
           paymentForm.note.trim();
       }
 
-      /*
-        Transaction date is NOT sent
-        from the frontend.
-
-        Backend automatically records
-        the actual current date/time
-        when the payment is submitted.
-      */
-
       await api.post(
         `/suppliers/${paymentSupplier._id}/payments`,
         payload,
@@ -1120,7 +1074,7 @@ function Suppliers() {
       if (
         selectedSupplier &&
         selectedSupplier._id ===
-          paymentSupplier._id
+        paymentSupplier._id
       ) {
         const freshSupplier =
           await api.get(
@@ -1153,7 +1107,7 @@ function Suppliers() {
         Array.isArray(backendMessage)
           ? backendMessage.join(', ')
           : backendMessage ||
-              'Failed to record payment',
+          'Failed to record payment',
       );
     } finally {
       setPaymentLoading(false);
@@ -1215,73 +1169,49 @@ function Suppliers() {
             <h2>Add Supplier</h2>
           </div>
 
-          <form
-            onSubmit={
-              handleAddSupplier
-            }
-          >
+          <form onSubmit={handleAddSupplier}>
             <div className="supplier-form-grid">
 
               <div className="form-group">
-                <label>
-                  Supplier Name
-                </label>
+                <label>Supplier Name</label>
 
                 <input
                   type="text"
                   name="name"
-                  value={
-                    supplierForm.name
-                  }
-                  onChange={
-                    handleSupplierFormChange
-                  }
+                  value={supplierForm.name}
+                  onChange={handleSupplierFormChange}
                   placeholder="Enter supplier name"
                   required
                 />
               </div>
 
               <div className="form-group">
-                <label>
-                  Location / Address
-                </label>
+                <label>Location / Address</label>
 
                 <input
                   type="text"
                   name="location"
-                  value={
-                    supplierForm.location
-                  }
-                  onChange={
-                    handleSupplierFormChange
-                  }
+                  value={supplierForm.location}
+                  onChange={handleSupplierFormChange}
                   placeholder="Enter supplier location"
                 />
               </div>
 
               <div className="form-group">
-                <label>
-                  Opening Balance
-                </label>
+                <label>Opening Balance</label>
 
                 <input
                   type="number"
                   name="openingBalance"
-                  value={
-                    supplierForm.openingBalance
-                  }
-                  onChange={
-                    handleSupplierFormChange
-                  }
+                  value={supplierForm.openingBalance}
+                  onChange={handleSupplierFormChange}
                   placeholder="0"
                   min="0"
                   step="0.01"
                 />
 
                 <small>
-                  Optional. This is the
-                  initial amount owed to
-                  the supplier.
+                  Optional. This is the initial amount owed to the supplier.
                 </small>
               </div>
 
@@ -1293,17 +1223,13 @@ function Suppliers() {
                 className="primary-btn"
                 disabled={loading}
               >
-                {loading
-                  ? 'Saving...'
-                  : 'Save Supplier'}
+                {loading ? 'Saving...' : 'Save Supplier'}
               </button>
 
               <button
                 type="button"
                 className="secondary-btn"
-                onClick={() =>
-                  setShowAddForm(false)
-                }
+                onClick={() => setShowAddForm(false)}
               >
                 Cancel
               </button>
@@ -1313,7 +1239,7 @@ function Suppliers() {
       )}
 
       {/* =====================================================
-          SUPPLIERS TABLE
+          SUPPLIERS TABLE & SEARCH BAR
       ====================================================== */}
 
       <div className="suppliers-table-card">
@@ -1323,30 +1249,33 @@ function Suppliers() {
             <h2>Supplier List</h2>
 
             <span>
-              {suppliers.length}{' '}
-              supplier
-              {suppliers.length !== 1
-                ? 's'
-                : ''}
+              {filteredSuppliers.length} supplier
+              {filteredSuppliers.length !== 1 ? 's' : ''}
+              {searchTerm && ` (filtered from ${suppliers.length})`}
             </span>
+          </div>
+
+          {/* Supplier Search Bar */}
+          <div className="supplier-search-wrapper">
+            <input
+              type="text"
+              placeholder="Search by supplier name or location..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
         </div>
 
-        {loading &&
-        suppliers.length === 0 ? (
-          <div className="supplier-loading">
-            Loading suppliers...
-          </div>
-        ) : suppliers.length === 0 ? (
+        {loading && suppliers.length === 0 ? (
+          <div className="supplier-loading">Loading suppliers...</div>
+        ) : filteredSuppliers.length === 0 ? (
           <div className="supplier-empty">
-            <h3>
-              No suppliers found
-            </h3>
+            <h3>No suppliers found</h3>
 
             <p>
-              Add your first supplier to
-              start managing purchases and
-              payments.
+              {searchTerm
+                ? 'No supplier matches your search criteria.'
+                : 'Add your first supplier to start managing purchases and payments.'}
             </p>
           </div>
         ) : (
@@ -1363,164 +1292,123 @@ function Suppliers() {
               </thead>
 
               <tbody>
-                {suppliers.map(
-                  (supplier) => {
-                    const balanceStatus =
-                      getBalanceStatus(
-                        supplier.balance,
-                      );
+                {filteredSuppliers.map((supplier) => {
+                  const balanceStatus = getBalanceStatus(supplier.balance);
 
-                    return (
-                      <tr
-                        key={
-                          supplier._id
-                        }
-                      >
-                        <td>
-                          <div className="supplier-name-cell">
-                            <strong>
-                              {
-                                supplier.name
-                              }
-                            </strong>
-                          </div>
-                        </td>
+                  return (
+                    <tr key={supplier._id}>
+                      <td>
+                        <div className="supplier-name-cell">
+                          <strong>{supplier.name}</strong>
+                        </div>
+                      </td>
 
-                        <td>
-                          {supplier.location ||
-                            '-'}
-                        </td>
+                      <td>{supplier.location || '-'}</td>
 
-                        {/* BALANCE */}
+                      {/* BALANCE */}
+                      <td>
+                        <div className="supplier-balance-display">
+                          <strong className={`supplier-balance ${balanceStatus.type}`}>
+                            {formatBalance(supplier.balance)}
+                          </strong>
 
-                        <td>
-                          <div className="supplier-balance-display">
+                          <small className={`supplier-balance-label ${balanceStatus.type}`}>
+                            {balanceStatus.label}
+                          </small>
+                        </div>
+                      </td>
 
-                            <strong
-                              className={`supplier-balance ${balanceStatus.type}`}
-                            >
-                              {formatBalance(
-                                supplier.balance,
-                              )}
-                            </strong>
-
-                            <small
-                              className={`supplier-balance-label ${balanceStatus.type}`}
-                            >
-                              {
-                                balanceStatus.label
-                              }
-                            </small>
-
-                          </div>
-                        </td>
-
-                        {/* STATUS */}
-
-                        <td>
-                          <span
-                            className={`supplier-status ${
-                              supplier.isActive
-                                ? 'active'
-                                : 'inactive'
+                      {/* STATUS */}
+                      <td>
+                        <span
+                          className={`supplier-status ${supplier.isActive ? 'active' : 'inactive'
                             }`}
+                        >
+                          {supplier.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+
+                      {/* ACTIONS */}
+                      <td>
+                        <div className="supplier-actions">
+                          <button
+                            className="action-btn ledger-btn"
+                            onClick={() => openLedger(supplier)}
                           >
-                            {supplier.isActive
-                              ? 'Active'
-                              : 'Inactive'}
-                          </span>
-                        </td>
+                            Ledger
+                          </button>
 
-                        {/* ACTIONS */}
+                          <button
+                            className="action-btn purchase-btn"
+                            onClick={() => openPurchaseModal(supplier)}
+                            disabled={!supplier.isActive}
+                          >
+                            Purchase
+                          </button>
 
-                        <td>
-                          <div className="supplier-actions">
+                          <button
+                            className="action-btn payment-btn"
+                            onClick={() => openPaymentModal(supplier)}
+                            disabled={!supplier.isActive}
+                          >
+                            Payment
+                          </button>
 
+                          <button
+                            className="action-btn edit-btn"
+                            onClick={() => openEditSupplier(supplier)}
+                          >
+                            Edit
+                          </button>
+
+                          <button
+                            className="action-btn toggle-btn"
+                            onClick={() => handleToggleSupplier(supplier)}
+                          >
+                            {supplier.isActive ? 'Deactivate' : 'Activate'}
+                          </button>
+
+                          {Number(supplier.balance ?? 0) === 0 && (
                             <button
-                              className="action-btn ledger-btn"
-                              onClick={() =>
-                                openLedger(
-                                  supplier,
-                                )
-                              }
+                              className="action-btn delete-btn"
+                              onClick={() => handleDeleteSupplier(supplier)}
                             >
-                              Ledger
+                              Delete
                             </button>
-
-                            <button
-                              className="action-btn purchase-btn"
-                              onClick={() =>
-                                openPurchaseModal(
-                                  supplier,
-                                )
-                              }
-                              disabled={
-                                !supplier.isActive
-                              }
-                            >
-                              Purchase
-                            </button>
-
-                            <button
-                              className="action-btn payment-btn"
-                              onClick={() =>
-                                openPaymentModal(
-                                  supplier,
-                                )
-                              }
-                              disabled={
-                                !supplier.isActive
-                              }
-                            >
-                              Payment
-                            </button>
-
-                            <button
-                              className="action-btn edit-btn"
-                              onClick={() =>
-                                openEditSupplier(
-                                  supplier,
-                                )
-                              }
-                            >
-                              Edit
-                            </button>
-
-                            <button
-                              className="action-btn toggle-btn"
-                              onClick={() =>
-                                handleToggleSupplier(
-                                  supplier,
-                                )
-                              }
-                            >
-                              {supplier.isActive
-                                ? 'Deactivate'
-                                : 'Activate'}
-                            </button>
-
-                            {Number(
-                              supplier.balance ?? 0,
-                            ) === 0 && (
-                              <button
-                                className="action-btn delete-btn"
-                                onClick={() =>
-                                  handleDeleteSupplier(
-                                    supplier,
-                                  )
-                                }
-                              >
-                                Delete
-                              </button>
-                            )}
-
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  },
-                )}
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
+
+              {/* Supplier Balance Total Summary Footer */}
+              <tfoot>
+                <tr>
+                  <td colSpan="2">
+                    <div className="supplier-footer-label">
+                      Total Net Payable
+                    </div>
+                  </td>
+
+                  <td>
+                    <div className="supplier-footer-badge">
+                      <div className="supplier-balance-display">
+                        <strong className={`supplier-balance ${getBalanceStatus(totalBalance).type}`}>
+                          {formatBalance(totalBalance)}
+                        </strong>
+
+                        <small className={`supplier-balance-label ${getBalanceStatus(totalBalance).type}`}>
+                          {getBalanceStatus(totalBalance).label}
+                        </small>
+                      </div>
+                    </div>
+                  </td>
+
+                  <td colSpan="2"></td>
+                </tr>
+              </tfoot>
             </table>
           </div>
         )}
@@ -1533,68 +1421,41 @@ function Suppliers() {
       {editingSupplier && (
         <div className="modal-overlay">
           <div className="supplier-modal">
-
             <div className="modal-header">
               <div>
-                <h2>
-                  Edit Supplier
-                </h2>
-
-                <p>
-                  Update supplier
-                  information
-                </p>
+                <h2>Edit Supplier</h2>
+                <p>Update supplier information</p>
               </div>
 
               <button
                 className="modal-close"
-                onClick={() =>
-                  setEditingSupplier(
-                    null,
-                  )
-                }
+                onClick={() => setEditingSupplier(null)}
               >
                 ×
               </button>
             </div>
 
-            <form
-              onSubmit={
-                handleUpdateSupplier
-              }
-            >
+            <form onSubmit={handleUpdateSupplier}>
               <div className="form-group">
-                <label>
-                  Supplier Name
-                </label>
+                <label>Supplier Name</label>
 
                 <input
                   type="text"
                   name="name"
-                  value={
-                    editForm.name
-                  }
-                  onChange={
-                    handleEditFormChange
-                  }
+                  value={editForm.name}
+                  onChange={handleEditFormChange}
                   required
                 />
               </div>
 
               <div className="form-group">
-                <label>
-                  Location / Address
-                </label>
+                <label>Location / Address</label>
 
                 <input
                   type="text"
                   name="location"
-                  value={
-                    editForm.location
-                  }
-                  onChange={
-                    handleEditFormChange
-                  }
+                  value={editForm.location}
+                  onChange={handleEditFormChange}
                   placeholder="Supplier location"
                 />
               </div>
@@ -1603,11 +1464,7 @@ function Suppliers() {
                 <button
                   type="button"
                   className="secondary-btn"
-                  onClick={() =>
-                    setEditingSupplier(
-                      null,
-                    )
-                  }
+                  onClick={() => setEditingSupplier(null)}
                 >
                   Cancel
                 </button>
@@ -1617,9 +1474,7 @@ function Suppliers() {
                   className="primary-btn"
                   disabled={loading}
                 >
-                  {loading
-                    ? 'Updating...'
-                    : 'Update Supplier'}
+                  {loading ? 'Updating...' : 'Update Supplier'}
                 </button>
               </div>
             </form>
@@ -1631,1166 +1486,672 @@ function Suppliers() {
           LEDGER MODAL
       ====================================================== */}
 
-      {showLedger &&
-        selectedSupplier && (
-          <div className="modal-overlay">
-            <div className="supplier-ledger-modal">
-
-              <div className="modal-header">
-                <div>
-                  <h2>
-                    {selectedSupplier.name}
-                    {' '}
-                    Ledger
-                  </h2>
-
-                  <p>
-                    {selectedSupplier.location ||
-                      'No location added'}
-                  </p>
-                </div>
-
-                <button
-                  className="modal-close"
-                  onClick={
-                    closeLedger
-                  }
-                >
-                  ×
-                </button>
+      {showLedger && selectedSupplier && (
+        <div className="modal-overlay">
+          <div className="supplier-ledger-modal">
+            <div className="modal-header">
+              <div>
+                <h2>{selectedSupplier.name} Ledger</h2>
+                <p>{selectedSupplier.location || 'No location added'}</p>
               </div>
 
-              {/* CURRENT BALANCE */}
+              <button className="modal-close" onClick={closeLedger}>
+                ×
+              </button>
+            </div>
 
-              <div className="supplier-ledger-summary">
+            {/* CURRENT BALANCE */}
+            <div className="supplier-ledger-summary">
+              {(() => {
+                const status = getBalanceStatus(
+                  ledgerBalance ?? selectedSupplier.balance ?? 0
+                );
 
-                {(() => {
-                  const status =
-                    getBalanceStatus(
-                      ledgerBalance ??
-                        selectedSupplier.balance ??
-                        0,
-                    );
+                return (
+                  <div className="supplier-ledger-summary-card">
+                    <span>{status.label}</span>
 
-                  return (
-                    <div className="supplier-ledger-summary-card">
+                    <strong className={`ledger-current-balance ${status.type}`}>
+                      {formatBalance(
+                        ledgerBalance ?? selectedSupplier.balance ?? 0
+                      )}
+                    </strong>
 
-                      <span>
-                        {
-                          status.label
-                        }
-                      </span>
-
-                      <strong
-                        className={`ledger-current-balance ${status.type}`}
-                      >
-                        {formatBalance(
-                          ledgerBalance ??
-                            selectedSupplier.balance ??
-                            0,
-                        )}
-                      </strong>
-
-                      <small>
-                        {status.type ===
-                        'payable'
-                          ? 'Amount payable to supplier'
-                          : status.type ===
-                            'advance'
+                    <small>
+                      {status.type === 'payable'
+                        ? 'Amount payable to supplier'
+                        : status.type === 'advance'
                           ? 'Advance with supplier'
                           : 'No outstanding balance'}
-                      </small>
-
-                    </div>
-                  );
-                })()}
-
-              </div>
-
-              {/* LEDGER ACTIONS */}
-
-              <div className="ledger-actions">
-
-                <button
-                  className="action-btn purchase-btn"
-                  onClick={() =>
-                    openPurchaseModal(
-                      selectedSupplier,
-                    )
-                  }
-                  disabled={
-                    !selectedSupplier.isActive
-                  }
-                >
-                  + Purchase
-                </button>
-
-                <button
-                  className="action-btn payment-btn"
-                  onClick={() =>
-                    openPaymentModal(
-                      selectedSupplier,
-                    )
-                  }
-                  disabled={
-                    !selectedSupplier.isActive
-                  }
-                >
-                  + Payment
-                </button>
-
-              </div>
-
-              {/* TRANSACTIONS */}
-
-              <div className="supplier-ledger-section">
-
-                <div className="ledger-section-header">
-                  <div>
-                    <h3>
-                      Transactions
-                    </h3>
-
-                    <span>
-                      {
-                        ledgerTransactions.length
-                      }{' '}
-                      transaction
-                      {ledgerTransactions.length !==
-                      1
-                        ? 's'
-                        : ''}
-                    </span>
+                    </small>
                   </div>
+                );
+              })()}
+            </div>
+
+            {/* LEDGER ACTIONS */}
+            <div className="ledger-actions">
+              <button
+                className="action-btn purchase-btn"
+                onClick={() => openPurchaseModal(selectedSupplier)}
+                disabled={!selectedSupplier.isActive}
+              >
+                + Purchase
+              </button>
+
+              <button
+                className="action-btn payment-btn"
+                onClick={() => openPaymentModal(selectedSupplier)}
+                disabled={!selectedSupplier.isActive}
+              >
+                + Payment
+              </button>
+            </div>
+
+            {/* TRANSACTIONS */}
+            <div className="supplier-ledger-section">
+              <div className="ledger-section-header">
+                <div>
+                  <h3>Transactions</h3>
+                  <span>
+                    {ledgerTransactions.length} transaction
+                    {ledgerTransactions.length !== 1 ? 's' : ''}
+                  </span>
                 </div>
+              </div>
 
-                {ledgerLoading ? (
-                  <div className="supplier-loading">
-                    Loading ledger...
-                  </div>
-                ) : ledgerTransactions.length ===
-                  0 ? (
-                  <div className="supplier-empty">
-                    <h3>
-                      No transactions
-                    </h3>
+              {ledgerLoading ? (
+                <div className="supplier-loading">Loading ledger...</div>
+              ) : ledgerTransactions.length === 0 ? (
+                <div className="supplier-empty">
+                  <h3>No transactions</h3>
+                  <p>
+                    No purchases or payments have been recorded for this supplier.
+                  </p>
+                </div>
+              ) : (
+                <div className="table-responsive">
+                  <table className="ledger-table">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Payment</th>
+                        <th>Balance After</th>
+                        <th>Details</th>
+                      </tr>
+                    </thead>
 
-                    <p>
-                      No purchases or
-                      payments have been
-                      recorded for this
-                      supplier.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="table-responsive">
-                    <table className="ledger-table">
-                      <thead>
-                        <tr>
-                          <th>Date</th>
-                          <th>Type</th>
-                          <th>Amount</th>
-                          <th>Payment</th>
-                          <th>Balance After</th>
-                          <th>Details</th>
-                        </tr>
-                      </thead>
+                    <tbody>
+                      {ledgerTransactions.map((transaction) => {
+                        const balanceStatus = getBalanceStatus(
+                          transaction.balanceAfter
+                        );
 
-                      <tbody>
-                        {ledgerTransactions.map(
-                          (
-                            transaction,
-                          ) => {
-                            const balanceStatus =
-                              getBalanceStatus(
-                                transaction.balanceAfter,
-                              );
+                        return (
+                          <tr key={transaction._id}>
+                            <td>
+                              {formatDate(
+                                transaction.transactionDate ||
+                                transaction.createdAt
+                              )}
+                            </td>
 
-                            return (
-                              <tr
-                                key={
-                                  transaction._id
+                            <td>
+                              <span
+                                className={`transaction-type ${transaction.type}`}
+                              >
+                                {transaction.type === 'purchase'
+                                  ? 'Purchase'
+                                  : 'Payment'}
+                              </span>
+                            </td>
+
+                            <td>
+                              <strong>{formatAmount(transaction.amount)}</strong>
+                            </td>
+
+                            <td>
+                              {transaction.paymentMethod
+                                ? transaction.paymentMethod.toUpperCase()
+                                : '-'}
+                            </td>
+
+                            <td>
+                              <div className="ledger-balance-display">
+                                <strong
+                                  className={`ledger-balance ${balanceStatus.type}`}
+                                >
+                                  {formatBalance(transaction.balanceAfter)}
+                                </strong>
+
+                                <small
+                                  className={`ledger-balance-label ${balanceStatus.type}`}
+                                >
+                                  {balanceStatus.label}
+                                </small>
+                              </div>
+                            </td>
+
+                            <td>
+                              <button
+                                className="view-transaction-btn"
+                                onClick={() =>
+                                  openTransactionDetails(transaction)
                                 }
                               >
-                                <td>
-                                  {formatDate(
-                                    transaction.transactionDate ||
-                                      transaction.createdAt,
-                                  )}
-                                </td>
-
-                                <td>
-                                  <span
-                                    className={`transaction-type ${
-                                      transaction.type
-                                    }`}
-                                  >
-                                    {transaction.type ===
-                                    'purchase'
-                                      ? 'Purchase'
-                                      : 'Payment'}
-                                  </span>
-                                </td>
-
-                                <td>
-                                  <strong>
-                                    {formatAmount(
-                                      transaction.amount,
-                                    )}
-                                  </strong>
-                                </td>
-
-                                <td>
-                                  {transaction.paymentMethod
-                                    ? transaction.paymentMethod.toUpperCase()
-                                    : '-'}
-                                </td>
-
-                                <td>
-                                  <div className="ledger-balance-display">
-
-                                    <strong
-                                      className={`ledger-balance ${balanceStatus.type}`}
-                                    >
-                                      {formatBalance(
-                                        transaction.balanceAfter,
-                                      )}
-                                    </strong>
-
-                                    <small
-                                      className={`ledger-balance-label ${balanceStatus.type}`}
-                                    >
-                                      {
-                                        balanceStatus.label
-                                      }
-                                    </small>
-
-                                  </div>
-                                </td>
-
-                                <td>
-                                  <button
-                                    className="view-transaction-btn"
-                                    onClick={() =>
-                                      openTransactionDetails(
-                                        transaction,
-                                      )
-                                    }
-                                  >
-                                    View
-                                  </button>
-                                </td>
-                              </tr>
-                            );
-                          },
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-
-              </div>
-
+                                View
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
-        )}
+        </div>
+      )}
 
       {/* =====================================================
           TRANSACTION DETAILS MODAL
       ====================================================== */}
 
-      {showTransactionDetails &&
-        selectedTransaction && (
-          <div className="modal-overlay">
+      {showTransactionDetails && selectedTransaction && (
+        <div className="modal-overlay">
+          <div className="transaction-detail-modal">
+            <div className="modal-header">
+              <div>
+                <h2>Transaction Details</h2>
 
-            <div className="transaction-detail-modal">
+                <p>
+                  {selectedTransaction.type === 'purchase'
+                    ? 'Purchase transaction'
+                    : 'Payment transaction'}
+                </p>
+              </div>
 
-              {/* HEADER */}
+              <button
+                className="modal-close"
+                onClick={closeTransactionDetails}
+              >
+                ×
+              </button>
+            </div>
 
-              <div className="modal-header">
-                <div>
-                  <h2>
-                    Transaction Details
-                  </h2>
+            <div className="transaction-detail-grid">
+              <div>
+                <span>Date</span>
 
-                  <p>
-                    {selectedTransaction.type ===
-                    'purchase'
-                      ? 'Purchase transaction'
-                      : 'Payment transaction'}
-                  </p>
-                </div>
+                <strong>
+                  {formatDateTime(
+                    selectedTransaction.transactionDate ||
+                    selectedTransaction.createdAt
+                  )}
+                </strong>
+              </div>
 
-                <button
-                  className="modal-close"
-                  onClick={
-                    closeTransactionDetails
-                  }
+              <div>
+                <span>Supplier Location</span>
+
+                <strong>
+                  {selectedTransaction.supplierLocation ||
+                    'No location recorded'}
+                </strong>
+              </div>
+
+              <div>
+                <span>Type</span>
+
+                <strong>
+                  {selectedTransaction.type === 'purchase'
+                    ? 'Purchase'
+                    : 'Payment'}
+                </strong>
+              </div>
+
+              <div>
+                <span>Amount</span>
+
+                <strong>{formatAmount(selectedTransaction.amount)}</strong>
+              </div>
+
+              <div>
+                <span>Payment Method</span>
+
+                <strong>
+                  {selectedTransaction.paymentMethod
+                    ? selectedTransaction.paymentMethod.toUpperCase()
+                    : '-'}
+                </strong>
+              </div>
+
+              <div>
+                <span>
+                  {getBalanceStatus(selectedTransaction.balanceBefore).label}{' '}
+                  Before
+                </span>
+
+                <strong
+                  className={`ledger-balance ${getBalanceStatus(selectedTransaction.balanceBefore).type
+                    }`}
                 >
-                  ×
-                </button>
+                  {formatBalance(selectedTransaction.balanceBefore)}
+                </strong>
               </div>
 
-              {/* TRANSACTION INFORMATION */}
+              <div>
+                <span>
+                  {getBalanceStatus(selectedTransaction.balanceAfter).label}{' '}
+                  After
+                </span>
 
-              <div className="transaction-detail-grid">
-
-                {/* DATE */}
-
-                <div>
-                  <span>
-                    Date
-                  </span>
-
-                  <strong>
-                    {formatDateTime(
-                      selectedTransaction.transactionDate ||
-                        selectedTransaction.createdAt,
-                    )}
-                  </strong>
-                </div>
-
-                {/* HISTORICAL SUPPLIER LOCATION */}
-
-                <div>
-                  <span>
-                    Supplier Location
-                  </span>
-
-                  <strong>
-                    {selectedTransaction.supplierLocation ||
-                      'No location recorded'}
-                  </strong>
-                </div>
-
-                {/* TYPE */}
-
-                <div>
-                  <span>
-                    Type
-                  </span>
-
-                  <strong>
-                    {selectedTransaction.type ===
-                    'purchase'
-                      ? 'Purchase'
-                      : 'Payment'}
-                  </strong>
-                </div>
-
-                {/* AMOUNT */}
-
-                <div>
-                  <span>
-                    Amount
-                  </span>
-
-                  <strong>
-                    {formatAmount(
-                      selectedTransaction.amount,
-                    )}
-                  </strong>
-                </div>
-
-                {/* PAYMENT METHOD */}
-
-                <div>
-                  <span>
-                    Payment Method
-                  </span>
-
-                  <strong>
-                    {selectedTransaction.paymentMethod
-                      ? selectedTransaction.paymentMethod.toUpperCase()
-                      : '-'}
-                  </strong>
-                </div>
-
-                {/* BALANCE BEFORE */}
-
-                <div>
-                  <span>
-                    {
-                      getBalanceStatus(
-                        selectedTransaction.balanceBefore,
-                      ).label
-                    }{' '}
-                    Before
-                  </span>
-
-                  <strong
-                    className={`ledger-balance ${
-                      getBalanceStatus(
-                        selectedTransaction.balanceBefore,
-                      ).type
+                <strong
+                  className={`ledger-balance ${getBalanceStatus(selectedTransaction.balanceAfter).type
                     }`}
-                  >
-                    {formatBalance(
-                      selectedTransaction.balanceBefore,
-                    )}
-                  </strong>
-                </div>
-
-                {/* BALANCE AFTER */}
-
-                <div>
-                  <span>
-                    {
-                      getBalanceStatus(
-                        selectedTransaction.balanceAfter,
-                      ).label
-                    }{' '}
-                    After
-                  </span>
-
-                  <strong
-                    className={`ledger-balance ${
-                      getBalanceStatus(
-                        selectedTransaction.balanceAfter,
-                      ).type
-                    }`}
-                  >
-                    {formatBalance(
-                      selectedTransaction.balanceAfter,
-                    )}
-                  </strong>
-                </div>
-
+                >
+                  {formatBalance(selectedTransaction.balanceAfter)}
+                </strong>
               </div>
+            </div>
 
-              {/* PURCHASE ITEMS */}
+            {selectedTransaction.type === 'purchase' &&
+              selectedTransaction.items &&
+              selectedTransaction.items.length > 0 && (
+                <div className="transaction-items-section">
+                  <h3>Purchased Dresses</h3>
 
-              {selectedTransaction.type ===
-                'purchase' &&
-                selectedTransaction.items &&
-                selectedTransaction.items
-                  .length > 0 && (
-                  <div className="transaction-items-section">
+                  <div className="table-responsive">
+                    <table className="transaction-items-table">
+                      <thead>
+                        <tr>
+                          <th>Dress</th>
+                          <th>Brand</th>
+                          <th>Size</th>
+                          <th>Color</th>
+                          <th>Qty</th>
+                          <th>Price</th>
+                          <th>Subtotal</th>
+                        </tr>
+                      </thead>
 
-                    <h3>
-                      Purchased Dresses
-                    </h3>
-
-                    <div className="table-responsive">
-                      <table className="transaction-items-table">
-                        <thead>
-                          <tr>
-                            <th>
-                              Dress
-                            </th>
-
-                            <th>
-                              Brand
-                            </th>
-
-                            <th>
-                              Size
-                            </th>
-
-                            <th>
-                              Color
-                            </th>
-
-                            <th>
-                              Qty
-                            </th>
-
-                            <th>
-                              Price
-                            </th>
-
-                            <th>
-                              Subtotal
-                            </th>
+                      <tbody>
+                        {selectedTransaction.items.map((item, index) => (
+                          <tr key={item.productId || item.product || index}>
+                            <td>{item.dressName}</td>
+                            <td>{item.brand || '-'}</td>
+                            <td>{item.size || '-'}</td>
+                            <td>{item.color || '-'}</td>
+                            <td>{item.quantity}</td>
+                            <td>
+                              {formatAmount(
+                                item.purchasePrice ?? item.price ?? 0
+                              )}
+                            </td>
+                            <td>
+                              {formatAmount(
+                                item.subtotal ??
+                                Number(item.quantity || 0) *
+                                Number(
+                                  item.purchasePrice ?? item.price ?? 0
+                                )
+                              )}
+                            </td>
                           </tr>
-                        </thead>
-
-                        <tbody>
-                          {selectedTransaction.items.map(
-                            (
-                              item,
-                              index,
-                            ) => (
-                              <tr
-                                key={
-                                  item.productId ||
-                                  item.product ||
-                                  index
-                                }
-                              >
-                                <td>
-                                  {
-                                    item.dressName
-                                  }
-                                </td>
-
-                                <td>
-                                  {item.brand ||
-                                    '-'}
-                                </td>
-
-                                <td>
-                                  {item.size ||
-                                    '-'}
-                                </td>
-
-                                <td>
-                                  {item.color ||
-                                    '-'}
-                                </td>
-
-                                <td>
-                                  {
-                                    item.quantity
-                                  }
-                                </td>
-
-                                <td>
-                                  {formatAmount(
-                                    item.purchasePrice ??
-                                      item.price ??
-                                      0,
-                                  )}
-                                </td>
-
-                                <td>
-                                  {formatAmount(
-                                    item.subtotal ??
-                                      Number(
-                                        item.quantity ||
-                                          0,
-                                      ) *
-                                        Number(
-                                          item.purchasePrice ??
-                                            item.price ??
-                                            0,
-                                        ),
-                                  )}
-                                </td>
-                              </tr>
-                            ),
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-                )}
-
-              {/* NOTE */}
-
-              {selectedTransaction.note && (
-                <div className="transaction-note">
-
-                  <span>
-                    Note
-                  </span>
-
-                  <p>
-                    {
-                      selectedTransaction.note
-                    }
-                  </p>
-
                 </div>
               )}
 
-              {/* MODAL ACTIONS */}
-
-              <div className="modal-actions">
-
-                <button
-                  className="secondary-btn"
-                  onClick={
-                    closeTransactionDetails
-                  }
-                >
-                  Close
-                </button>
-
+            {selectedTransaction.note && (
+              <div className="transaction-note">
+                <span>Note</span>
+                <p>{selectedTransaction.note}</p>
               </div>
+            )}
 
+            <div className="modal-actions">
+              <button
+                className="secondary-btn"
+                onClick={closeTransactionDetails}
+              >
+                Close
+              </button>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
       {/* =====================================================
           PURCHASE MODAL
       ====================================================== */}
 
-      {showPurchaseModal &&
-        purchaseSupplier && (
-          <div className="modal-overlay">
-            <div className="purchase-modal">
+      {showPurchaseModal && purchaseSupplier && (
+        <div className="modal-overlay">
+          <div className="purchase-modal">
+            <div className="modal-header">
+              <div>
+                <h2>Record Purchase</h2>
 
-              <div className="modal-header">
-                <div>
-                  <h2>
-                    Record Purchase
-                  </h2>
-
-                  <p>
-                    Supplier:{' '}
-                    <strong>
-                      {
-                        purchaseSupplier.name
-                      }
-                    </strong>
-                  </p>
-                </div>
-
-                <button
-                  className="modal-close"
-                  onClick={
-                    closePurchaseModal
-                  }
-                >
-                  ×
-                </button>
+                <p>
+                  Supplier: <strong>{purchaseSupplier.name}</strong>
+                </p>
               </div>
 
-              {/* CURRENT DATE / TIME */}
+              <button className="modal-close" onClick={closePurchaseModal}>
+                ×
+              </button>
+            </div>
 
-              <div className="purchase-details-grid">
-
-                <div className="form-group">
-                  <label>
-                    Transaction Date & Time
-                  </label>
-
-                  <input
-                    type="text"
-                    value={formatDateTime(
-                      currentDateTime,
-                    )}
-                    readOnly
-                  />
-
-                  <small>
-                    Automatically recorded when
-                    you submit this purchase.
-                  </small>
-                </div>
-
-              </div>
-
-              {/* PRODUCT SEARCH */}
-
-              <div className="purchase-product-search">
-
-                <label>
-                  Search Product
-                </label>
+            <div className="purchase-details-grid">
+              <div className="form-group">
+                <label>Transaction Date & Time</label>
 
                 <input
                   type="text"
-                  value={
-                    productSearch
-                  }
-                  onChange={(e) =>
-                    setProductSearch(
-                      e.target.value,
-                    )
-                  }
-                  placeholder="Search by dress name, category, brand, size or color..."
+                  value={formatDateTime(currentDateTime)}
+                  readOnly
                 />
 
-                {productSearch && (
-                  <div className="product-search-results">
-
-                    {productsLoading ? (
-                      <div className="product-search-loading">
-                        Loading products...
-                      </div>
-                    ) : filteredProducts.length ===
-                      0 ? (
-                      <div className="product-search-empty">
-                        No products found
-                      </div>
-                    ) : (
-                      filteredProducts.map(
-                        (product) => (
-                          <button
-                            type="button"
-                            className="product-search-item"
-                            key={
-                              product._id
-                            }
-                            onClick={() =>
-                              addProductToPurchase(
-                                product,
-                              )
-                            }
-                          >
-                            <div>
-                              <strong>
-                                {
-                                  product.dressName
-                                }
-                              </strong>
-
-                              <span>
-                                {product.brand ||
-                                  '-'}
-                                {' • '}
-                                {product.category ||
-                                  '-'}
-                              </span>
-                            </div>
-
-                            <div>
-                              <span>
-                                Size:{' '}
-                                {product.size ||
-                                  '-'}
-                              </span>
-
-                              <span>
-                                Color:{' '}
-                                {product.color ||
-                                  '-'}
-                              </span>
-                            </div>
-                          </button>
-                        ),
-                      )
-                    )}
-
-                  </div>
-                )}
-
+                <small>
+                  Automatically recorded when you submit this purchase.
+                </small>
               </div>
+            </div>
 
-              {/* PURCHASE ITEMS */}
+            <div className="purchase-product-search">
+              <label>Search Product</label>
 
-              <div className="purchase-items-section">
+              <input
+                type="text"
+                value={productSearch}
+                onChange={(e) => setProductSearch(e.target.value)}
+                placeholder="Search by dress name, category, brand, size or color..."
+              />
 
-                <div className="purchase-items-header">
-                  <h3>
-                    Purchase Items
-                  </h3>
-
-                  <span>
-                    {
-                      purchaseItems.length
-                    }{' '}
-                    item
-                    {purchaseItems.length !==
-                    1
-                      ? 's'
-                      : ''}
-                  </span>
-                </div>
-
-                {purchaseItems.length ===
-                0 ? (
-                  <div className="purchase-empty">
-                    Search and select
-                    products above to add
-                    them to this purchase.
-                  </div>
-                ) : (
-                  <div className="purchase-items-list">
-
-                    {purchaseItems.map(
-                      (item) => (
-                        <div
-                          className="purchase-item-row"
-                          key={
-                            item.productId
-                          }
-                        >
-
-                          <div className="purchase-item-info">
-                            <strong>
-                              {
-                                item.dressName
-                              }
-                            </strong>
-
-                            <span>
-                              {item.brand ||
-                                '-'}
-                              {' • '}
-                              {item.size ||
-                                '-'}
-                              {' • '}
-                              {item.color ||
-                                '-'}
-                            </span>
-                          </div>
-
-                          <div className="purchase-item-field">
-                            <label>
-                              Qty
-                            </label>
-
-                            <input
-                              type="number"
-                              min="1"
-                              value={
-                                item.quantity
-                              }
-                              onChange={(e) =>
-                                updatePurchaseItem(
-                                  item.productId,
-                                  'quantity',
-                                  e.target
-                                    .value,
-                                )
-                              }
-                            />
-                          </div>
-
-                          <div className="purchase-item-field">
-                            <label>
-                              Purchase Price
-                            </label>
-
-                            <input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={
-                                item.purchasePrice
-                              }
-                              onChange={(e) =>
-                                updatePurchaseItem(
-                                  item.productId,
-                                  'purchasePrice',
-                                  e.target
-                                    .value,
-                                )
-                              }
-                            />
-                          </div>
-
-                          <div className="purchase-item-subtotal">
-                            <span>
-                              Subtotal
-                            </span>
-
-                            <strong>
-                              {formatAmount(
-                                Number(
-                                  item.quantity ||
-                                    0,
-                                ) *
-                                  Number(
-                                    item.purchasePrice ||
-                                      0,
-                                  ),
-                              )}
-                            </strong>
-                          </div>
-
-                          <button
-                            type="button"
-                            className="remove-purchase-item"
-                            onClick={() =>
-                              removePurchaseItem(
-                                item.productId,
-                              )
-                            }
-                          >
-                            ×
-                          </button>
-
+              {productSearch && (
+                <div className="product-search-results">
+                  {productsLoading ? (
+                    <div className="product-search-loading">
+                      Loading products...
+                    </div>
+                  ) : filteredProducts.length === 0 ? (
+                    <div className="product-search-empty">
+                      No products found
+                    </div>
+                  ) : (
+                    filteredProducts.map((product) => (
+                      <button
+                        type="button"
+                        className="product-search-item"
+                        key={product._id}
+                        onClick={() => addProductToPurchase(product)}
+                      >
+                        <div>
+                          <strong>{product.dressName}</strong>
+                          <span>
+                            {product.brand || '-'} • {product.category || '-'}
+                          </span>
                         </div>
-                      ),
-                    )}
 
-                  </div>
-                )}
-
-              </div>
-
-              {/* PURCHASE DETAILS */}
-
-              <div className="purchase-details-grid">
-
-                <div className="form-group">
-                  <label>
-                    Note
-                  </label>
-
-                  <input
-                    type="text"
-                    value={
-                      purchaseNote
-                    }
-                    onChange={(e) =>
-                      setPurchaseNote(
-                        e.target.value,
-                      )
-                    }
-                    placeholder="Optional note"
-                  />
-                </div>
-
-              </div>
-
-              {/* TOTAL */}
-
-              <div className="purchase-total">
-                <span>
-                  Total Purchase
-                </span>
-
-                <strong>
-                  {formatAmount(
-                    purchaseTotal,
+                        <div>
+                          <span>Size: {product.size || '-'}</span>
+                          <span>Color: {product.color || '-'}</span>
+                        </div>
+                      </button>
+                    ))
                   )}
-                </strong>
+                </div>
+              )}
+            </div>
+
+            <div className="purchase-items-section">
+              <div className="purchase-items-header">
+                <h3>Purchase Items</h3>
+                <span>
+                  {purchaseItems.length} item
+                  {purchaseItems.length !== 1 ? 's' : ''}
+                </span>
               </div>
 
-              {/* ACTIONS */}
+              {purchaseItems.length === 0 ? (
+                <div className="purchase-empty">
+                  Search and select products above to add them to this purchase.
+                </div>
+              ) : (
+                <div className="purchase-items-list">
+                  {purchaseItems.map((item) => (
+                    <div className="purchase-item-row" key={item.productId}>
+                      <div className="purchase-item-info">
+                        <strong>{item.dressName}</strong>
+                        <span>
+                          {item.brand || '-'} • {item.size || '-'} •{' '}
+                          {item.color || '-'}
+                        </span>
+                      </div>
 
-              <div className="modal-actions">
+                      <div className="purchase-item-field">
+                        <label>Qty</label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={item.quantity}
+                          onChange={(e) =>
+                            updatePurchaseItem(
+                              item.productId,
+                              'quantity',
+                              e.target.value
+                            )
+                          }
+                        />
+                      </div>
 
-                <button
-                  type="button"
-                  className="secondary-btn"
-                  onClick={
-                    closePurchaseModal
-                  }
-                >
-                  Cancel
-                </button>
+                      <div className="purchase-item-field">
+                        <label>Purchase Price</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={item.purchasePrice}
+                          onChange={(e) =>
+                            updatePurchaseItem(
+                              item.productId,
+                              'purchasePrice',
+                              e.target.value
+                            )
+                          }
+                        />
+                      </div>
 
-                <button
-                  type="button"
-                  className="primary-btn"
-                  onClick={
-                    handleCreatePurchase
-                  }
-                  disabled={
-                    loading ||
-                    purchaseItems.length ===
-                      0
-                  }
-                >
-                  {loading
-                    ? 'Saving...'
-                    : 'Record Purchase'}
-                </button>
+                      <div className="purchase-item-subtotal">
+                        <span>Subtotal</span>
+                        <strong>
+                          {formatAmount(
+                            Number(item.quantity || 0) *
+                            Number(item.purchasePrice || 0)
+                          )}
+                        </strong>
+                      </div>
 
+                      <button
+                        type="button"
+                        className="remove-purchase-item"
+                        onClick={() => removePurchaseItem(item.productId)}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="purchase-details-grid">
+              <div className="form-group">
+                <label>Note</label>
+
+                <input
+                  type="text"
+                  value={purchaseNote}
+                  onChange={(e) => setPurchaseNote(e.target.value)}
+                  placeholder="Optional note"
+                />
               </div>
+            </div>
 
+            <div className="purchase-total">
+              <span>Total Purchase</span>
+              <strong>{formatAmount(purchaseTotal)}</strong>
+            </div>
+
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="secondary-btn"
+                onClick={closePurchaseModal}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                className="primary-btn"
+                onClick={handleCreatePurchase}
+                disabled={loading || purchaseItems.length === 0}
+              >
+                {loading ? 'Saving...' : 'Record Purchase'}
+              </button>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
       {/* =====================================================
           PAYMENT MODAL
       ====================================================== */}
 
-      {showPaymentModal &&
-        paymentSupplier && (
-          <div className="modal-overlay">
-            <div className="payment-modal">
+      {showPaymentModal && paymentSupplier && (
+        <div className="modal-overlay">
+          <div className="payment-modal">
+            <div className="modal-header">
+              <div>
+                <h2>Record Payment</h2>
 
-              <div className="modal-header">
-                <div>
-                  <h2>
-                    Record Payment
-                  </h2>
+                <p>
+                  Supplier: <strong>{paymentSupplier.name}</strong>
+                </p>
+              </div>
 
-                  <p>
-                    Supplier:{' '}
-                    <strong>
-                      {
-                        paymentSupplier.name
-                      }
-                    </strong>
-                  </p>
+              <button className="modal-close" onClick={closePaymentModal}>
+                ×
+              </button>
+            </div>
+
+            {(() => {
+              const status = getBalanceStatus(paymentSupplier.balance ?? 0);
+
+              return (
+                <div className="payment-current-balance">
+                  <span>Current {status.label}</span>
+
+                  <strong className={status.type}>
+                    {formatBalance(paymentSupplier.balance ?? 0)}
+                  </strong>
                 </div>
+              );
+            })()}
+
+            <div className="purchase-details-grid">
+              <div className="form-group">
+                <label>Transaction Date & Time</label>
+
+                <input
+                  type="text"
+                  value={formatDateTime(currentDateTime)}
+                  readOnly
+                />
+
+                <small>
+                  Automatically recorded when you submit this payment.
+                </small>
+              </div>
+            </div>
+
+            <form onSubmit={handleCreatePayment}>
+              <div className="form-group">
+                <label>Payment Amount</label>
+
+                <input
+                  type="number"
+                  name="amount"
+                  value={paymentForm.amount}
+                  onChange={handlePaymentFormChange}
+                  placeholder="Enter payment amount"
+                  min="0.01"
+                  step="0.01"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Payment Method</label>
+
+                <select
+                  name="paymentMethod"
+                  value={paymentForm.paymentMethod}
+                  onChange={handlePaymentFormChange}
+                >
+                  <option value="cash">Cash</option>
+                  <option value="bank">Bank</option>
+                  <option value="card">Card</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Note</label>
+
+                <input
+                  type="text"
+                  name="note"
+                  value={paymentForm.note}
+                  onChange={handlePaymentFormChange}
+                  placeholder="Optional note"
+                />
+              </div>
+
+              <div className="payment-info">
+                Payment will reduce the supplier's outstanding balance. If you pay
+                more than the current balance, the extra amount will be recorded as
+                a supplier advance and will automatically be adjusted against
+                future purchases.
+              </div>
+
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="secondary-btn"
+                  onClick={closePaymentModal}
+                >
+                  Cancel
+                </button>
 
                 <button
-                  className="modal-close"
-                  onClick={
-                    closePaymentModal
-                  }
+                  type="submit"
+                  className="primary-btn"
+                  disabled={paymentLoading}
                 >
-                  ×
+                  {paymentLoading ? 'Saving...' : 'Record Payment'}
                 </button>
               </div>
-
-              {/* CURRENT BALANCE */}
-
-              {(() => {
-                const status =
-                  getBalanceStatus(
-                    paymentSupplier.balance ??
-                      0,
-                  );
-
-                return (
-                  <div className="payment-current-balance">
-
-                    <span>
-                      Current{' '}
-                      {
-                        status.label
-                      }
-                    </span>
-
-                    <strong
-                      className={
-                        status.type
-                      }
-                    >
-                      {formatBalance(
-                        paymentSupplier.balance ??
-                          0,
-                      )}
-                    </strong>
-
-                  </div>
-                );
-              })()}
-
-              {/* CURRENT DATE / TIME */}
-
-              <div className="purchase-details-grid">
-
-                <div className="form-group">
-                  <label>
-                    Transaction Date & Time
-                  </label>
-
-                  <input
-                    type="text"
-                    value={formatDateTime(
-                      currentDateTime,
-                    )}
-                    readOnly
-                  />
-
-                  <small>
-                    Automatically recorded when
-                    you submit this payment.
-                  </small>
-                </div>
-
-              </div>
-
-              <form
-                onSubmit={
-                  handleCreatePayment
-                }
-              >
-
-                <div className="form-group">
-                  <label>
-                    Payment Amount
-                  </label>
-
-                  <input
-                    type="number"
-                    name="amount"
-                    value={
-                      paymentForm.amount
-                    }
-                    onChange={
-                      handlePaymentFormChange
-                    }
-                    placeholder="Enter payment amount"
-                    min="0.01"
-                    step="0.01"
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>
-                    Payment Method
-                  </label>
-
-                  <select
-                    name="paymentMethod"
-                    value={
-                      paymentForm.paymentMethod
-                    }
-                    onChange={
-                      handlePaymentFormChange
-                    }
-                  >
-                    <option value="cash">
-                      Cash
-                    </option>
-
-                    <option value="bank">
-                      Bank
-                    </option>
-
-                    <option value="card">
-                      Card
-                    </option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label>
-                    Note
-                  </label>
-
-                  <input
-                    type="text"
-                    name="note"
-                    value={
-                      paymentForm.note
-                    }
-                    onChange={
-                      handlePaymentFormChange
-                    }
-                    placeholder="Optional note"
-                  />
-                </div>
-
-                <div className="payment-info">
-                  Payment will reduce the
-                  supplier's outstanding
-                  balance. If you pay more
-                  than the current balance,
-                  the extra amount will be
-                  recorded as a supplier
-                  advance and will
-                  automatically be adjusted
-                  against future purchases.
-                </div>
-
-                <div className="modal-actions">
-
-                  <button
-                    type="button"
-                    className="secondary-btn"
-                    onClick={
-                      closePaymentModal
-                    }
-                  >
-                    Cancel
-                  </button>
-
-                  <button
-                    type="submit"
-                    className="primary-btn"
-                    disabled={
-                      paymentLoading
-                    }
-                  >
-                    {paymentLoading
-                      ? 'Saving...'
-                      : 'Record Payment'}
-                  </button>
-
-                </div>
-
-              </form>
-
-            </div>
+            </form>
           </div>
-        )}
+        </div>
+      )}
 
     </div>
   );

@@ -2724,6 +2724,127 @@ button.remove-cart-button:hover {
 }
 
 /* =========================================================
+   ENHANCED SUPPLIER SEARCH BAR
+========================================================= */
+
+.supplier-search-wrapper {
+  position: relative;
+  min-width: 320px;
+}
+
+.supplier-search-wrapper input {
+  width: 100%;
+  height: 42px;
+  box-sizing: border-box;
+
+  border: 1px solid #decbd5;
+  border-radius: 9px;
+
+  padding: 10px 14px 10px 38px; /* Left padding for search icon */
+
+  background: #ffffff;
+  color: #44343c;
+
+  font-family: inherit;
+  font-size: 13px;
+
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+/* Glassmorphism search icon effect */
+.supplier-search-wrapper::before {
+  content: '🔍';
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 13px;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.supplier-search-wrapper input:focus {
+  border-color: #c96a9a;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(201, 106, 154, 0.12);
+}
+
+.supplier-search-wrapper input::placeholder {
+  color: #a2949c;
+}
+
+
+/* =========================================================
+   ELEVATED TABLE FOOTER SUMMARY
+========================================================= */
+
+.suppliers-table tfoot {
+  background: linear-gradient(135deg, #fff7fa 0%, #fffdf8 100%);
+  border-top: 2px solid #ead9e2;
+}
+
+.suppliers-table tfoot tr td {
+  padding: 18px 20px !important;
+  vertical-align: middle;
+}
+
+.supplier-footer-label {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+
+  color: #6b214d;
+  font-size: 14px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Card Badge Container for Total Amount */
+.supplier-footer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 10px 16px;
+
+  background: #ffffff;
+  border: 1px solid #e4c6d5;
+  border-radius: 12px;
+
+  box-shadow: 0 4px 12px rgba(107, 33, 77, 0.05);
+}
+
+.supplier-footer-badge strong {
+  font-size: 17px;
+  font-weight: 800;
+}
+
+
+/* =========================================================
+   RESPONSIVE ADJUSTMENTS
+========================================================= */
+
+@media (max-width: 768px) {
+  .suppliers-table-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .supplier-search-wrapper {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .supplier-footer-label {
+    justify-content: flex-start;
+  }
+}
+
+/* =========================================================
    MESSAGE
 ========================================================= */
 
