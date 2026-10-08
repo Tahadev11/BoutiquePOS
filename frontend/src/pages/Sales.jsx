@@ -999,24 +999,33 @@ function Sales() {
 
         <div className="sales-history-section">
 
-{/* SEARCH BAR (Matching Sales Page Structure) */}
-<div className="sales-search">
-  <input
-    type="text"
-    placeholder="Search supplier name or location..."
-    value={searchTerm}
-    onChange={(e) => setSearchTerm(e.target.value)}
-  />
+          {/* SEARCH */}
 
-  {searchTerm && (
-    <button
-      type="button"
-      onClick={() => setSearchTerm('')}
-    >
-      Clear
-    </button>
-  )}
-</div>
+          <div className="sales-search">
+
+            <input
+              type="text"
+              placeholder="Search invoice or dress name..."
+              value={search}
+              onChange={(e) =>
+                setSearch(e.target.value)
+              }
+            />
+
+            {search && (
+
+              <button
+                type="button"
+                onClick={() =>
+                  setSearch('')
+                }
+              >
+                Clear
+              </button>
+
+            )}
+
+          </div>
 
           {/* MESSAGE */}
 

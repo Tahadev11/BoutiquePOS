@@ -1255,15 +1255,24 @@ function Suppliers() {
             </span>
           </div>
 
-          {/* Supplier Search Bar */}
-          <div className="supplier-search-wrapper">
-            <input
-              type="text"
-              placeholder="Search by supplier name or location..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
+{/* SEARCH BAR (Matching Sales Page Structure) */}
+<div className="sales-search">
+  <input
+    type="text"
+    placeholder="Search supplier name or location..."
+    value={searchTerm}
+    onChange={(e) => setSearchTerm(e.target.value)}
+  />
+
+  {searchTerm && (
+    <button
+      type="button"
+      onClick={() => setSearchTerm('')}
+    >
+      Clear
+    </button>
+  )}
+</div>
         </div>
 
         {loading && suppliers.length === 0 ? (
