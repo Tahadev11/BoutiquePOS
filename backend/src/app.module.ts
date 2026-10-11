@@ -10,6 +10,10 @@ import { AuthModule } from './auth/auth.module';
 import { SalesModule } from './sales/sales.module';
 import { SuppliersModule } from './suppliers/suppliers.module';
 import { ExpensesModule } from './expenses/expenses.module';
+import { InvestorsModule } from './investors/investors.module';
+import { EmployeesService } from './employees/employees.service';
+import { EmployeesController } from './employees/employees.controller';
+import { EmployeesModule } from './employees/employees.module';
 
 @Module({
   imports: [
@@ -27,6 +31,8 @@ import { ExpensesModule } from './expenses/expenses.module';
     SalesModule,
     SuppliersModule,
     ExpensesModule,
+    InvestorsModule,
+    EmployeesModule,
   ],
 
   controllers: [AppController],

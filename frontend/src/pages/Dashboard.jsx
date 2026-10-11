@@ -3,6 +3,8 @@ import Products from './Products';
 import POS from './POS';
 import Sales from './Sales';
 import Suppliers from './Suppliers';
+import Investors from './Investors';
+import Employees from './Employees';
 import ReturnExchange from './ReturnExchange';
 
 function Dashboard({ onLogout }) {
@@ -80,6 +82,24 @@ function Dashboard({ onLogout }) {
                         Suppliers
                     </button>
 
+                    {/* Investors */}
+                    <button
+                        className={page === 'investors' ? 'active' : ''}
+                        onClick={() => setPage('investors')}
+                    >
+                        <span>◎</span>
+                        Investors
+                    </button>
+
+                    {/* Employees */}
+                    <button
+                        className={page === 'employees' ? 'active' : ''}
+                        onClick={() => setPage('employees')}
+                    >
+                        <span>☰</span>
+                        Employees
+                    </button>
+
                 </nav>
 
                 <div className="sidebar-bottom">
@@ -112,6 +132,8 @@ function Dashboard({ onLogout }) {
                             {page === 'sales' && 'Sales'}
                             {page === 'return-exchange' && 'Return / Exchange'}
                             {page === 'suppliers' && 'Suppliers'}
+                            {page === 'investors' && 'Investors'}
+                            {page === 'employees' && 'Employees'}
                         </h1>
 
                         <p>
@@ -142,9 +164,9 @@ function Dashboard({ onLogout }) {
 
                                     <p>
                                         Manage your boutique, products,
-                                        sales, suppliers, returns,
-                                        exchanges and inventory
-                                        from one place.
+                                        sales, suppliers, investors,
+                                        employees, returns, exchanges
+                                        and inventory from one place.
                                     </p>
 
                                 </div>
@@ -229,6 +251,38 @@ function Dashboard({ onLogout }) {
                                     </p>
                                 </div>
 
+
+                                {/* Investors */}
+                                <div
+                                    className="dashboard-card"
+                                    onClick={() => setPage('investors')}
+                                >
+                                    <h3>
+                                        Investors
+                                    </h3>
+
+                                    <p>
+                                        Manage investors, investments
+                                        and returns
+                                    </p>
+                                </div>
+
+
+                                {/* Employees */}
+                                <div
+                                    className="dashboard-card"
+                                    onClick={() => setPage('employees')}
+                                >
+                                    <h3>
+                                        Employees
+                                    </h3>
+
+                                    <p>
+                                        Manage employees, salaries
+                                        and payments
+                                    </p>
+                                </div>
+
                             </div>
 
                         </>
@@ -277,6 +331,24 @@ function Dashboard({ onLogout }) {
 
                     {page === 'suppliers' && (
                         <Suppliers />
+                    )}
+
+
+                    {/* =========================
+                        INVESTORS
+                    ========================= */}
+
+                    {page === 'investors' && (
+                        <Investors />
+                    )}
+
+
+                    {/* =========================
+                        EMPLOYEES
+                    ========================= */}
+
+                    {page === 'employees' && (
+                        <Employees />
                     )}
 
                 </main>

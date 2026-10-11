@@ -326,7 +326,7 @@ function Products() {
 
         <input
           type="text"
-          placeholder="Search dress or category..."
+          placeholder="Search dress name, category, brand name or price..."
           value={search}
           onChange={(e) =>
             setSearch(e.target.value)
