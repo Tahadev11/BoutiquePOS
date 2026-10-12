@@ -16,6 +16,7 @@ import { UpdateSupplierDto } from './dto/update-supplier.dto';
 
 import { CreatePurchaseDto } from './transactions/dto/create-purchase.dto';
 import { CreatePaymentDto } from './transactions/dto/create-payment.dto';
+import { CreateReturnDto } from './transactions/dto/create-return.dto';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
@@ -136,6 +137,24 @@ export class SuppliersController {
     return this.suppliersService.createPayment(
       id,
       createPaymentDto,
+    );
+  }
+
+    // ============================================
+  // CREATE RETURN
+  // ============================================
+
+  @Post(':id/returns')
+  createReturn(
+    @Param('id')
+    id: string,
+
+    @Body()
+    createReturnDto: CreateReturnDto,
+  ) {
+    return this.suppliersService.createReturn(
+      id,
+      createReturnDto,
     );
   }
 }

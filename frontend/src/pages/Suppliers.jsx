@@ -96,6 +96,25 @@ function Suppliers() {
   const [paymentLoading, setPaymentLoading] =
     useState(false);
 
+  // Return
+  const [showReturnModal, setShowReturnModal] =
+    useState(false);
+
+  const [returnSupplier, setReturnSupplier] =
+    useState(null);
+
+  const [returnItems, setReturnItems] =
+    useState([]);
+
+  const [returnNote, setReturnNote] =
+    useState('');
+
+  const [returnProductSearch, setReturnProductSearch] =
+    useState('');
+
+  const [returnLoading, setReturnLoading] =
+    useState(false);
+
   // =========================================================
   // CURRENT DATE / TIME
   // =========================================================
@@ -256,6 +275,17 @@ function Suppliers() {
     const status = getBalanceStatus(balance);
 
     return formatAmount(status.amount);
+  };
+
+  // =========================================================
+  // TRANSACTION TYPE LABEL (shared helper)
+  // =========================================================
+
+  const getTransactionTypeLabel = (type) => {
+    if (type === 'purchase') return 'Purchase';
+    if (type === 'return') return 'Return';
+    if (type === 'payment') return 'Payment';
+    return type;
   };
 
   // =========================================================
@@ -685,10 +715,10 @@ function Suppliers() {
   };
 
   useEffect(() => {
-    if (showPurchaseModal) {
+    if (showPurchaseModal || showReturnModal) {
       fetchProducts();
     }
-  }, [showPurchaseModal]);
+  }, [showPurchaseModal, showReturnModal]);
 
   const filteredProducts = useMemo(() => {
     const search =
@@ -732,6 +762,50 @@ function Suppliers() {
   }, [
     products,
     productSearch,
+  ]);
+
+  const filteredReturnProducts = useMemo(() => {
+    const search =
+      returnProductSearch
+        .trim()
+        .toLowerCase();
+
+    if (!search) {
+      return products;
+    }
+
+    return products.filter((product) => {
+      const dressName =
+        product.dressName
+          ?.toLowerCase() || '';
+
+      const category =
+        product.category
+          ?.toLowerCase() || '';
+
+      const brand =
+        product.brand
+          ?.toLowerCase() || '';
+
+      const size =
+        product.size
+          ?.toLowerCase() || '';
+
+      const color =
+        product.color
+          ?.toLowerCase() || '';
+
+      return (
+        dressName.includes(search) ||
+        category.includes(search) ||
+        brand.includes(search) ||
+        size.includes(search) ||
+        color.includes(search)
+      );
+    });
+  }, [
+    products,
+    returnProductSearch,
   ]);
 
   // =========================================================
@@ -810,13 +884,7 @@ function Suppliers() {
         item.productId === productId
           ? {
             ...item,
-            [field]:
-              field ===
-                'quantity' ||
-                field ===
-                'purchasePrice'
-                ? value
-                : value,
+            [field]: value,
           }
           : item,
       ),
@@ -1115,6 +1183,246 @@ function Suppliers() {
   };
 
   // =========================================================
+  // RETURN MODAL
+  // =========================================================
+
+  const openReturnModal = (supplier) => {
+    setReturnSupplier(supplier);
+    setReturnItems([]);
+    setReturnNote('');
+    setReturnProductSearch('');
+    setCurrentDateTime(new Date());
+    setShowReturnModal(true);
+    setMessage('');
+  };
+
+  const closeReturnModal = () => {
+    setShowReturnModal(false);
+    setReturnSupplier(null);
+    setReturnItems([]);
+    setReturnNote('');
+    setReturnProductSearch('');
+  };
+
+  const addProductToReturn = (product) => {
+    const alreadyAdded =
+      returnItems.some(
+        (item) =>
+          item.productId === product._id,
+      );
+
+    if (alreadyAdded) {
+      setMessage(
+        'This product is already added to the return',
+      );
+      return;
+    }
+
+    const availableStock = Number(
+      product.stockQuantity ?? 0,
+    );
+
+    if (availableStock <= 0) {
+      setMessage(
+        `${product.dressName} has no stock available to return`,
+      );
+      return;
+    }
+
+    setReturnItems((prev) => [
+      ...prev,
+      {
+        productId: product._id,
+        dressName:
+          product.dressName || '',
+        brand:
+          product.brand || '',
+        category:
+          product.category || '',
+        size:
+          product.size || '',
+        color:
+          product.color || '',
+        quantity: 1,
+        returnPrice: Number(
+          product.purchasePrice || 0,
+        ),
+        availableStock,
+      },
+    ]);
+
+    setReturnProductSearch('');
+    setMessage('');
+  };
+
+  const updateReturnItem = (
+    productId,
+    field,
+    value,
+  ) => {
+    setReturnItems((prev) =>
+      prev.map((item) =>
+        item.productId === productId
+          ? {
+            ...item,
+            [field]: value,
+          }
+          : item,
+      ),
+    );
+  };
+
+  const removeReturnItem = (productId) => {
+    setReturnItems((prev) =>
+      prev.filter(
+        (item) =>
+          item.productId !== productId,
+      ),
+    );
+  };
+
+  const returnTotal = useMemo(() => {
+    return returnItems.reduce(
+      (total, item) => {
+        const quantity =
+          Number(item.quantity) || 0;
+
+        const price =
+          Number(item.returnPrice) || 0;
+
+        return total + quantity * price;
+      },
+      0,
+    );
+  }, [returnItems]);
+
+  const handleCreateReturn = async (e) => {
+    e.preventDefault();
+
+    if (!returnSupplier) {
+      return;
+    }
+
+    if (returnItems.length === 0) {
+      setMessage(
+        'Please add at least one product to return',
+      );
+      return;
+    }
+
+    const invalidItem =
+      returnItems.find((item) => {
+        const quantity =
+          Number(item.quantity);
+
+        const returnPrice =
+          Number(item.returnPrice);
+
+        if (
+          !Number.isFinite(quantity) ||
+          quantity <= 0 ||
+          !Number.isFinite(returnPrice) ||
+          returnPrice < 0
+        ) {
+          return true;
+        }
+
+        if (
+          Number.isFinite(item.availableStock) &&
+          quantity > item.availableStock
+        ) {
+          return true;
+        }
+
+        return false;
+      });
+
+    if (invalidItem) {
+      if (
+        Number.isFinite(invalidItem.availableStock) &&
+        Number(invalidItem.quantity) >
+        invalidItem.availableStock
+      ) {
+        setMessage(
+          `Return quantity for ${invalidItem.dressName} exceeds available stock (${invalidItem.availableStock}).`,
+        );
+      } else {
+        setMessage(
+          'Please enter valid quantity and return price for all products',
+        );
+      }
+      return;
+    }
+
+    try {
+      setReturnLoading(true);
+      setMessage('');
+
+      const payload = {
+        items: returnItems.map((item) => ({
+          productId: item.productId,
+          quantity: Number(item.quantity),
+          returnPrice: Number(item.returnPrice),
+        })),
+      };
+
+      if (returnNote.trim()) {
+        payload.note = returnNote.trim();
+      }
+
+      await api.post(
+        `/suppliers/${returnSupplier._id}/returns`,
+        payload,
+      );
+
+      closeReturnModal();
+
+      await fetchSuppliers();
+
+      if (
+        selectedSupplier &&
+        selectedSupplier._id ===
+        returnSupplier._id
+      ) {
+        const freshSupplier =
+          await api.get(
+            `/suppliers/${returnSupplier._id}`,
+          );
+
+        await openLedger(
+          freshSupplier.data,
+        );
+      }
+
+      setMessage(
+        'Return recorded successfully',
+      );
+    } catch (error) {
+      console.error(
+        'Error creating return:',
+        error,
+      );
+
+      console.error(
+        'Backend response:',
+        error.response?.data,
+      );
+
+      const backendMessage =
+        error.response?.data?.message;
+
+      setMessage(
+        Array.isArray(backendMessage)
+          ? backendMessage.join(', ')
+          : backendMessage ||
+          'Failed to record return',
+      );
+    } finally {
+      setReturnLoading(false);
+    }
+  };
+
+  // =========================================================
   // RENDER
   // =========================================================
 
@@ -1131,7 +1439,7 @@ function Suppliers() {
 
           <p>
             Manage suppliers, purchases,
-            payments and supplier ledgers.
+            returns, payments and supplier ledgers.
           </p>
         </div>
 
@@ -1356,6 +1664,14 @@ function Suppliers() {
                           </button>
 
                           <button
+                            className="action-btn return-btn"
+                            onClick={() => openReturnModal(supplier)}
+                            disabled={!supplier.isActive}
+                          >
+                            Return
+                          </button>
+
+                          <button
                             className="action-btn payment-btn"
                             onClick={() => openPaymentModal(supplier)}
                             disabled={!supplier.isActive}
@@ -1549,6 +1865,14 @@ function Suppliers() {
               </button>
 
               <button
+                className="action-btn return-btn"
+                onClick={() => openReturnModal(selectedSupplier)}
+                disabled={!selectedSupplier.isActive}
+              >
+                + Return
+              </button>
+
+              <button
                 className="action-btn payment-btn"
                 onClick={() => openPaymentModal(selectedSupplier)}
                 disabled={!selectedSupplier.isActive}
@@ -1575,7 +1899,7 @@ function Suppliers() {
                 <div className="supplier-empty">
                   <h3>No transactions</h3>
                   <p>
-                    No purchases or payments have been recorded for this supplier.
+                    No purchases, returns or payments have been recorded for this supplier.
                   </p>
                 </div>
               ) : (
@@ -1611,9 +1935,7 @@ function Suppliers() {
                               <span
                                 className={`transaction-type ${transaction.type}`}
                               >
-                                {transaction.type === 'purchase'
-                                  ? 'Purchase'
-                                  : 'Payment'}
+                                {getTransactionTypeLabel(transaction.type)}
                               </span>
                             </td>
 
@@ -1677,9 +1999,7 @@ function Suppliers() {
                 <h2>Transaction Details</h2>
 
                 <p>
-                  {selectedTransaction.type === 'purchase'
-                    ? 'Purchase transaction'
-                    : 'Payment transaction'}
+                  {getTransactionTypeLabel(selectedTransaction.type)} transaction
                 </p>
               </div>
 
@@ -1716,9 +2036,7 @@ function Suppliers() {
                 <span>Type</span>
 
                 <strong>
-                  {selectedTransaction.type === 'purchase'
-                    ? 'Purchase'
-                    : 'Payment'}
+                  {getTransactionTypeLabel(selectedTransaction.type)}
                 </strong>
               </div>
 
@@ -1767,11 +2085,16 @@ function Suppliers() {
               </div>
             </div>
 
-            {selectedTransaction.type === 'purchase' &&
+            {(selectedTransaction.type === 'purchase' ||
+              selectedTransaction.type === 'return') &&
               selectedTransaction.items &&
               selectedTransaction.items.length > 0 && (
                 <div className="transaction-items-section">
-                  <h3>Purchased Dresses</h3>
+                  <h3>
+                    {selectedTransaction.type === 'return'
+                      ? 'Returned Dresses'
+                      : 'Purchased Dresses'}
+                  </h3>
 
                   <div className="table-responsive">
                     <table className="transaction-items-table">
@@ -2034,6 +2357,230 @@ function Suppliers() {
                 disabled={loading || purchaseItems.length === 0}
               >
                 {loading ? 'Saving...' : 'Record Purchase'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =====================================================
+          RETURN MODAL
+      ====================================================== */}
+
+      {showReturnModal && returnSupplier && (
+        <div className="modal-overlay">
+          <div className="purchase-modal">
+            <div className="modal-header">
+              <div>
+                <h2>Record Return</h2>
+
+                <p>
+                  Supplier: <strong>{returnSupplier.name}</strong>
+                </p>
+              </div>
+
+              <button className="modal-close" onClick={closeReturnModal}>
+                ×
+              </button>
+            </div>
+
+            <div className="purchase-details-grid">
+              <div className="form-group">
+                <label>Transaction Date & Time</label>
+
+                <input
+                  type="text"
+                  value={formatDateTime(currentDateTime)}
+                  readOnly
+                />
+
+                <small>
+                  Automatically recorded when you submit this return.
+                </small>
+              </div>
+            </div>
+
+            <div className="purchase-product-search">
+              <label>Search Product</label>
+
+              <input
+                type="text"
+                value={returnProductSearch}
+                onChange={(e) =>
+                  setReturnProductSearch(e.target.value)
+                }
+                placeholder="Search by dress name, category, brand, size or color..."
+              />
+
+              {returnProductSearch && (
+                <div className="product-search-results">
+                  {productsLoading ? (
+                    <div className="product-search-loading">
+                      Loading products...
+                    </div>
+                  ) : filteredReturnProducts.length === 0 ? (
+                    <div className="product-search-empty">
+                      No products found
+                    </div>
+                  ) : (
+                    filteredReturnProducts.map((product) => {
+                      const availableStock = Number(
+                        product.stockQuantity ?? 0,
+                      );
+
+                      return (
+                        <button
+                          type="button"
+                          className="product-search-item"
+                          key={product._id}
+                          onClick={() => addProductToReturn(product)}
+                          disabled={availableStock <= 0}
+                        >
+                          <div>
+                            <strong>{product.dressName}</strong>
+                            <span>
+                              {product.brand || '-'} • {product.category || '-'}
+                            </span>
+                          </div>
+
+                          <div>
+                            <span>Size: {product.size || '-'}</span>
+                            <span>Color: {product.color || '-'}</span>
+                            <span>Stock: {availableStock}</span>
+                          </div>
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="purchase-items-section">
+              <div className="purchase-items-header">
+                <h3>Return Items</h3>
+                <span>
+                  {returnItems.length} item
+                  {returnItems.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+
+              {returnItems.length === 0 ? (
+                <div className="purchase-empty">
+                  Search and select products above to add them to this return.
+                </div>
+              ) : (
+                <div className="purchase-items-list">
+                  {returnItems.map((item) => (
+                    <div className="purchase-item-row" key={item.productId}>
+                      <div className="purchase-item-info">
+                        <strong>{item.dressName}</strong>
+                        <span>
+                          {item.brand || '-'} • {item.size || '-'} •{' '}
+                          {item.color || '-'}
+                        </span>
+                        <span>
+                          Available stock: {item.availableStock}
+                        </span>
+                      </div>
+
+                      <div className="purchase-item-field">
+                        <label>Qty</label>
+                        <input
+                          type="number"
+                          min="1"
+                          max={item.availableStock}
+                          value={item.quantity}
+                          onChange={(e) =>
+                            updateReturnItem(
+                              item.productId,
+                              'quantity',
+                              e.target.value,
+                            )
+                          }
+                        />
+                      </div>
+
+                      <div className="purchase-item-field">
+                        <label>Return Price</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={item.returnPrice}
+                          onChange={(e) =>
+                            updateReturnItem(
+                              item.productId,
+                              'returnPrice',
+                              e.target.value,
+                            )
+                          }
+                        />
+                      </div>
+
+                      <div className="purchase-item-subtotal">
+                        <span>Subtotal</span>
+                        <strong>
+                          {formatAmount(
+                            Number(item.quantity || 0) *
+                            Number(item.returnPrice || 0),
+                          )}
+                        </strong>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="remove-purchase-item"
+                        onClick={() => removeReturnItem(item.productId)}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="purchase-details-grid">
+              <div className="form-group">
+                <label>Note</label>
+
+                <input
+                  type="text"
+                  value={returnNote}
+                  onChange={(e) => setReturnNote(e.target.value)}
+                  placeholder="Optional note"
+                />
+              </div>
+            </div>
+
+            <div className="purchase-total">
+              <span>Total Return</span>
+              <strong>{formatAmount(returnTotal)}</strong>
+            </div>
+
+            <div className="payment-info">
+              Returning dresses will reduce the supplier balance and decrease
+              stock. If the return total exceeds the current payable balance,
+              the remainder becomes an advance with the supplier.
+            </div>
+
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="secondary-btn"
+                onClick={closeReturnModal}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                className="primary-btn"
+                onClick={handleCreateReturn}
+                disabled={returnLoading || returnItems.length === 0}
+              >
+                {returnLoading ? 'Saving...' : 'Record Return'}
               </button>
             </div>
           </div>

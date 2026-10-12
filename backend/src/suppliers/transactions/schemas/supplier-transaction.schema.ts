@@ -146,11 +146,11 @@ export class SupplierTransaction {
 
   @Prop({
     type: String,
-    enum: ['purchase', 'payment'],
+    enum: ['purchase', 'payment', 'return'],
     required: true,
     index: true,
   })
-  type: 'purchase' | 'payment';
+  type: 'purchase' | 'payment' | 'return';
 
   // ==========================================================
   // TRANSACTION AMOUNT
@@ -193,7 +193,15 @@ export class SupplierTransaction {
   balanceBefore: number;
 
   // ==========================================================
-  // PURCHASE ITEMS
+  // PURCHASE / RETURN ITEMS
+  // ==========================================================
+  //
+  // Populated for `purchase` and `return` transactions.
+  // Empty for `payment` transactions.
+  //
+  // The item shape is identical in both cases:
+  //   - for purchase: purchasePrice = price paid to supplier
+  //   - for return:   purchasePrice = price credited by supplier
   // ==========================================================
 
   @Prop({

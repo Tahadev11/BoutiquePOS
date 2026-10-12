@@ -4692,6 +4692,16 @@ button.remove-cart-button:hover {
   }
 }
 
+.action-btn.return-btn {
+  background: #f59e0b;
+  color: #fff;
+}
+
+.transaction-type.return {
+  background: #fef3c7;
+  color: #b45309;
+}
+
 /* =========================================================
    GLAM BY HH — UNIFIED SCREEN UI
    Supplier-page visual language for dashboard screens.

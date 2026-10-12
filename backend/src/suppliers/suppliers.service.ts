@@ -27,6 +27,7 @@ import { CreateSupplierDto } from './dto/create-supplier.dto';
 import { UpdateSupplierDto } from './dto/update-supplier.dto';
 import { CreatePurchaseDto } from './transactions/dto/create-purchase.dto';
 import { CreatePaymentDto } from './transactions/dto/create-payment.dto';
+import { CreateReturnDto } from './transactions/dto/create-return.dto';
 
 @Injectable()
 export class SuppliersService {
@@ -539,6 +540,233 @@ export class SuppliersService {
     return {
       message:
         'Payment recorded successfully',
+
+      transaction,
+
+      supplierBalance:
+        supplier.balance,
+    };
+  }
+
+    // ============================================
+  // CREATE RETURN
+  // ============================================
+
+  async createReturn(
+    supplierId: string,
+    createReturnDto: CreateReturnDto,
+  ) {
+    const supplier =
+      await this.supplierModel.findById(
+        supplierId,
+      );
+
+    if (!supplier) {
+      throw new NotFoundException(
+        'Supplier not found',
+      );
+    }
+
+    if (!supplier.isActive) {
+      throw new BadRequestException(
+        'This supplier is inactive',
+      );
+    }
+
+    if (
+      !createReturnDto.items ||
+      createReturnDto.items.length === 0
+    ) {
+      throw new BadRequestException(
+        'Return must contain at least one product',
+      );
+    }
+
+    // --------------------------------------------
+    // Prevent duplicate products
+    // --------------------------------------------
+
+    const productIds =
+      createReturnDto.items.map(
+        item => item.productId,
+      );
+
+    const uniqueProductIds =
+      new Set(productIds);
+
+    if (
+      uniqueProductIds.size !==
+      productIds.length
+    ) {
+      throw new BadRequestException(
+        'The same product cannot be added twice in one return',
+      );
+    }
+
+    // --------------------------------------------
+    // Find products
+    // --------------------------------------------
+
+    const products =
+      await this.productModel.find({
+        _id: {
+          $in: productIds,
+        },
+      });
+
+    if (
+      products.length !==
+      productIds.length
+    ) {
+      throw new BadRequestException(
+        'One or more products were not found',
+      );
+    }
+
+    // --------------------------------------------
+    // Calculate return
+    // --------------------------------------------
+
+    let totalAmount = 0;
+
+    const returnItems = [];
+
+    for (
+      const item
+      of createReturnDto.items
+    ) {
+      const product =
+        products.find(
+          product =>
+            product._id.toString() ===
+            item.productId,
+        );
+
+      if (!product) {
+        throw new BadRequestException(
+          `Product ${item.productId} not found`,
+        );
+      }
+
+      // ------------------------------------------
+      // Stock check
+      // ------------------------------------------
+      //
+      // You cannot return more than what you
+      // currently have in stock.
+      // ------------------------------------------
+
+      if (
+        product.stockQuantity <
+        item.quantity
+      ) {
+        throw new BadRequestException(
+          `Not enough stock for ${product.dressName}. Available: ${product.stockQuantity}, requested: ${item.quantity}`,
+        );
+      }
+
+      const subtotal =
+        item.quantity *
+        item.returnPrice;
+
+      totalAmount += subtotal;
+
+      // ------------------------------------------
+      // Store product snapshot
+      // ------------------------------------------
+
+      returnItems.push({
+        product: product._id,
+        dressName: product.dressName,
+        brand: product.brand ?? '',
+        category: product.category ?? '',
+        size: product.size ?? '',
+        color: product.color ?? '',
+        quantity: item.quantity,
+        purchasePrice: item.returnPrice,
+        subtotal,
+      });
+
+      // ------------------------------------------
+      // Decrease stock
+      // ------------------------------------------
+
+      product.stockQuantity -=
+        item.quantity;
+
+      await product.save();
+    }
+
+    // --------------------------------------------
+    // Update supplier balance
+    // --------------------------------------------
+    //
+    // Returning dresses reduces the amount
+    // we owe the supplier.
+    //
+    // Example:
+    //
+    // Balance = 50,000
+    // Return  = 10,000
+    // New     = 40,000
+    //
+    // If the return is larger than the
+    // outstanding balance, the balance
+    // becomes negative — meaning the supplier
+    // now owes us (advance).
+    // --------------------------------------------
+
+    const balanceBefore =
+      supplier.balance;
+
+    supplier.balance -=
+      totalAmount;
+
+    await supplier.save();
+
+    // --------------------------------------------
+    // Create return transaction
+    // --------------------------------------------
+
+    const transaction =
+      new this.supplierTransactionModel({
+        supplier: supplier._id,
+
+        supplierName:
+          supplier.name,
+
+        supplierLocation:
+          supplier.location ?? '',
+
+        type: 'return',
+
+        amount:
+          totalAmount,
+
+        balanceBefore,
+
+        items:
+          returnItems,
+
+        note:
+          createReturnDto.note,
+
+        ...(createReturnDto.transactionDate
+          ? {
+              transactionDate:
+                createReturnDto.transactionDate,
+            }
+          : {}),
+
+        balanceAfter:
+          supplier.balance,
+      });
+
+    await transaction.save();
+
+    return {
+      message:
+        'Return recorded successfully',
 
       transaction,
 
