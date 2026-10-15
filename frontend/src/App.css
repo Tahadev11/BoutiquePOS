@@ -366,7 +366,7 @@ button:hover {
   margin: 0;
 }
 
-.total-dresses-card {
+/* .total-dresses-card {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -386,6 +386,177 @@ button:hover {
   font-size: 22px;
   font-weight: 700;
   color: #d4af37;
+} */
+
+
+/* =========================================
+   PRODUCTS SUMMARY CARDS
+   ========================================= */
+
+.products-summary-cards {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  gap: 14px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* =========================================
+   TOTAL DRESSES + TOTAL STOCK
+   Shared alignment and styling
+   ========================================= */
+
+.total-dresses-card,
+.total-stock-card {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 8px;
+
+  flex: 0 1 190px;
+  min-width: 0;
+  min-height: 100px;
+  padding: 16px 20px;
+
+  background: linear-gradient(
+    135deg,
+    #fff5f7 0%,
+    #ffedf2 100%
+  );
+
+  border: 1px solid #edc6d1;
+  border-radius: 12px;
+  box-shadow: 0 3px 10px rgba(128, 55, 78, 0.07);
+
+  transition: box-shadow 0.2s ease,
+              transform 0.2s ease;
+}
+
+/* Pink accent for dresses */
+.total-dresses-card {
+  border-left: 4px solid #c66b86;
+}
+
+/* Soft gold accent for stock */
+.total-stock-card {
+  border-left: 4px solid #c5a15b;
+}
+
+/* =========================================
+   LABELS
+   ========================================= */
+
+.total-dresses-label {
+  display: block;
+  max-width: 100%;
+  margin: 0;
+
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #76515f;
+  overflow-wrap: anywhere;
+}
+
+/* =========================================
+   NUMBERS
+   ========================================= */
+
+.total-dresses-count,
+.total-stock-card .total-dresses-count {
+  display: block;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0;
+
+  font-size: clamp(20px, 2vw, 25px);
+  font-weight: 700;
+  line-height: 1.25;
+  color: #873c58;
+
+  overflow-wrap: anywhere;
+  word-break: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+/* =========================================
+   HOVER
+   ========================================= */
+
+.total-dresses-card:hover,
+.total-stock-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(128, 55, 78, 0.12);
+}
+
+/* =========================================
+   MOBILE
+   ========================================= */
+
+@media (max-width: 600px) {
+  .products-summary-cards {
+    display: flex;
+    gap: 10px;
+  }
+
+  .products-summary-cards > div {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .total-dresses-card,
+  .total-stock-card {
+    min-height: 90px;
+    padding: 13px 12px;
+  }
+
+  .total-dresses-count,
+  .total-stock-card .total-dresses-count {
+    font-size: 21px;
+  }
+
+  .total-dresses-label {
+    font-size: 12px;
+  }
+}
+
+/* =========================================
+   LAPTOP: PAGE TITLE LEFT, SUMMARY CARDS RIGHT
+   ========================================= */
+
+@media (min-width: 1024px) {
+  /* The row containing the page heading and cards */
+  .products-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    width: 100%;
+  }
+
+  .products-header h1,
+  .products-header h2 {
+    margin-right: auto;
+    flex-shrink: 0;
+  }
+
+  .products-summary-cards {
+    display: flex;
+    align-items: stretch;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    gap: 14px;
+    width: auto;
+    margin-left: auto;
+  }
+
+  .products-summary-cards > div {
+    flex: 0 1 190px;
+    min-width: 150px;
+  }
 }
 
 .products-message {

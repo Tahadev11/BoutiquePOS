@@ -43,7 +43,7 @@ function Dashboard({ onLogout }) {
                         onClick={() => setPage('products')}
                     >
                         <span>◈</span>
-                        Products
+                        Dresses
                     </button>
 
                     {/* New Sale */}
@@ -127,7 +127,7 @@ function Dashboard({ onLogout }) {
 
                         <h1>
                             {page === 'dashboard' && 'Dashboard'}
-                            {page === 'products' && 'Products'}
+                            {page === 'products' && 'Dresses'}
                             {page === 'pos' && 'New Sale'}
                             {page === 'sales' && 'Sales'}
                             {page === 'return-exchange' && 'Return / Exchange'}
@@ -182,7 +182,7 @@ function Dashboard({ onLogout }) {
                                     onClick={() => setPage('products')}
                                 >
                                     <h3>
-                                        Products
+                                        Dresses
                                     </h3>
 
                                     <p>

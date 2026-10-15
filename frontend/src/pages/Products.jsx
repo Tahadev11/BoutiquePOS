@@ -1,7 +1,13 @@
+
 import { useEffect, useState } from 'react';
 import api from '../api/api';
 
 function Products() {
+  // =========================================================
+  // STATE
+  // =========================================================
+
+  const [allProducts, setAllProducts] = useState([]);
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
@@ -24,19 +30,28 @@ function Products() {
   const [editingId, setEditingId] = useState(null);
   const [message, setMessage] = useState('');
 
+  // =========================================================
+  // FETCH ALL PRODUCTS
+  // =========================================================
+
   const fetchProducts = async () => {
     try {
       setLoading(true);
 
       const response = await api.get('/products');
 
-      setProducts(response.data);
+      const data = Array.isArray(response.data)
+        ? response.data
+        : [];
+
+      setAllProducts(data);
+      setProducts(data);
     } catch (error) {
       console.error(error);
 
       setMessage(
         error.response?.data?.message ||
-        'Failed to load products',
+        'Failed to load products'
       );
     } finally {
       setLoading(false);
@@ -46,6 +61,25 @@ function Products() {
   useEffect(() => {
     fetchProducts();
   }, []);
+
+
+  // =========================================================
+  // TOTAL DRESSES AND TOTAL STOCK
+  // =========================================================
+
+  // Calculate totals from the currently displayed products.
+  const totalDresses = products.length;
+
+  const totalStock = products.reduce(
+    (total, product) =>
+      total + (Number(product.stockQuantity) || 0),
+    0
+  );
+
+
+  // =========================================================
+  // FORM HANDLING
+  // =========================================================
 
   const handleChange = (e) => {
     setForm({
@@ -70,6 +104,10 @@ function Products() {
     setEditingId(null);
   };
 
+  // =========================================================
+  // ADD / UPDATE PRODUCT
+  // =========================================================
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -89,44 +127,45 @@ function Products() {
       if (editingId) {
         await api.patch(
           `/products/${editingId}`,
-          productData,
+          productData
         );
 
         setMessage('Dress updated successfully');
       } else {
-        await api.post(
-          '/products',
-          productData,
-        );
+        await api.post('/products', productData);
 
         setMessage('Dress added successfully');
       }
 
       resetForm();
-      fetchProducts();
+      await fetchProducts();
     } catch (error) {
       console.error(error);
 
       setMessage(
         error.response?.data?.message ||
-        'Operation failed',
+        'Operation failed'
       );
     }
   };
+
+  // =========================================================
+  // EDIT PRODUCT
+  // =========================================================
 
   const handleEdit = (product) => {
     setEditingId(product._id);
 
     setForm({
-      dressName: product.dressName,
-      category: product.category,
-      brand: product.brand,
-      size: product.size,
-      color: product.color,
-      actualPrice: product.actualPrice,
-      discount: product.discount,
+      dressName: product.dressName ?? '',
+      category: product.category ?? '',
+      brand: product.brand ?? '',
+      size: product.size ?? '',
+      color: product.color ?? '',
+      actualPrice: product.actualPrice ?? '',
+      discount: product.discount ?? '',
       purchasePrice: product.purchasePrice ?? '',
-      stockQuantity: product.stockQuantity,
+      stockQuantity: product.stockQuantity ?? '',
     });
 
     window.scrollTo({
@@ -135,19 +174,23 @@ function Products() {
     });
   };
 
+  // =========================================================
+  // DELETE PRODUCT
+  // =========================================================
+
   const handleDelete = async (id) => {
     try {
       await api.delete(`/products/${id}`);
 
       setMessage('Dress deleted successfully');
 
-      fetchProducts();
+      await fetchProducts();
     } catch (error) {
       console.error(error);
 
       setMessage(
         error.response?.data?.message ||
-        'Failed to delete dress',
+        'Failed to delete dress'
       );
     }
   };
@@ -168,58 +211,109 @@ function Products() {
     setDeleteProductId(null);
   };
 
-  const handleSearch = async () => {
-    if (!search.trim()) {
-      fetchProducts();
+  // =========================================================
+  // FLEXIBLE SEARCH
+  // =========================================================
+
+  const handleSearch = (value = search) => {
+    const query = value.trim().toLowerCase();
+
+    // Show the complete inventory when the search is empty.
+    if (!query) {
+      setProducts(allProducts);
       return;
     }
 
-    try {
-      const response = await api.get(
-        `/products/search?q=${encodeURIComponent(search)}`,
-      );
+    const filteredProducts = allProducts.filter(
+      (product) => {
+        const actualPrice =
+          Number(product.actualPrice) || 0;
 
-      setProducts(response.data);
-    } catch (error) {
-      console.error(error);
+        const discount =
+          Number(product.discount) || 0;
 
-      setMessage(
-        error.response?.data?.message ||
-        'Search failed',
-      );
-    }
+        const salePrice =
+          actualPrice - (actualPrice * discount) / 100;
+
+        const searchableValues = [
+          product.dressName,
+          product.category,
+          product.brand,
+          product.size,
+          product.color,
+          product.actualPrice,
+          discount,
+          salePrice,
+          product.purchasePrice,
+          product.stockQuantity,
+        ];
+
+        return searchableValues.some((value) =>
+          String(value ?? '')
+            .toLowerCase()
+            .includes(query)
+        );
+      }
+    );
+
+    setProducts(filteredProducts);
   };
+
+  // =========================================================
+  // CLEAR SEARCH
+  // =========================================================
+
+  const handleShowAll = () => {
+    setSearch('');
+    setProducts(allProducts);
+  }
 
   return (
     <div className="products-page">
+      {/* PAGE HEADER AND SUMMARY CARDS */}
 
       <div className="products-header">
-        <h2>Products</h2>
+        <h2>Dresses</h2>
 
-        <div className="total-dresses-card">
-          <span className="total-dresses-label">Total Dresses</span>
-          <span className="total-dresses-count">{products.length}</span>
+        <div className="products-summary-cards">
+          <div className="total-dresses-card">
+            <span className="total-dresses-label">
+              Total Dresses
+            </span>
+
+            <span className="total-dresses-count">
+              {totalDresses}
+            </span>
+          </div>
+
+          <div className="total-stock-card">
+            <span className="total-dresses-label">
+              Total Stock
+            </span>
+
+            <span className="total-dresses-count">
+              {totalStock}
+            </span>
+          </div>
         </div>
       </div>
-      
+
+      {/* MESSAGE */}
+
       {message && (
-        <p className="products-message">
+        <p className="products-message" role="status">
           {message}
         </p>
       )}
 
-      {/* Add / Edit Form */}
+      {/* ADD / EDIT FORM */}
 
       <div className="product-form-box">
-
         <h3>
-          {editingId
-            ? 'Update Dress'
-            : 'Add New Dress'}
+          {editingId ? 'Update Dress' : 'Add New Dress'}
         </h3>
 
         <form onSubmit={handleSubmit}>
-
           <input
             name="dressName"
             placeholder="Dress Name"
@@ -302,9 +396,7 @@ function Products() {
           />
 
           <button type="submit">
-            {editingId
-              ? 'Update Dress'
-              : 'Add Dress'}
+            {editingId ? 'Update Dress' : 'Add Dress'}
           </button>
 
           {editingId && (
@@ -315,53 +407,52 @@ function Products() {
               Cancel
             </button>
           )}
-
         </form>
-
       </div>
 
-      {/* Search */}
+      {/* FLEXIBLE SEARCH */}
 
       <div className="product-search">
-
         <input
           type="text"
-          placeholder="Search dress name, category, brand name or price..."
+          placeholder="Search by dress, brand, category, size, color, price or stock..."
           value={search}
-          onChange={(e) =>
-            setSearch(e.target.value)
-          }
+          onChange={(e) => {
+            const value = e.target.value;
+
+            setSearch(value);
+            handleSearch(value);
+          }}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
+              e.preventDefault();
               handleSearch();
             }
           }}
         />
 
-        <button onClick={handleSearch}>
+        <button
+          type="button"
+          onClick={() => handleSearch()}
+        >
           Search
         </button>
 
         <button
-          onClick={() => {
-            setSearch('');
-            fetchProducts();
-          }}
+          type="button"
+          onClick={handleShowAll}
         >
           Show All
         </button>
-
       </div>
 
-      {/* Products */}
+      {/* PRODUCTS TABLE */}
 
       {loading ? (
         <p>Loading products...</p>
       ) : (
         <div className="products-table-container">
-
           <table className="products-table">
-
             <thead>
               <tr>
                 <th>Dress</th>
@@ -379,7 +470,6 @@ function Products() {
             </thead>
 
             <tbody>
-
               {products.length === 0 ? (
                 <tr>
                   <td colSpan="11">
@@ -388,124 +478,95 @@ function Products() {
                 </tr>
               ) : (
                 products.map((product) => {
+                  const actualPrice =
+                    Number(product.actualPrice) || 0;
+
+                  const discount =
+                    Number(product.discount) || 0;
 
                   const salePrice =
-                    product.actualPrice -
-                    (
-                      product.actualPrice *
-                      product.discount /
-                      100
-                    );
+                    actualPrice -
+                    (actualPrice * discount) / 100;
 
                   return (
                     <tr key={product._id}>
+                      <td>{product.dressName}</td>
+
+                      <td>{product.category}</td>
+
+                      <td>{product.brand}</td>
+
+                      <td>{product.size}</td>
+
+                      <td>{product.color}</td>
+
+                      <td>Rs. {actualPrice}</td>
+
+                      <td>{discount}%</td>
 
                       <td>
-                        {product.dressName}
+                        Rs. {Number(salePrice.toFixed(2))}
                       </td>
 
                       <td>
-                        {product.category}
+                        Rs. {Number(product.purchasePrice) || 0}
                       </td>
 
                       <td>
-                        {product.brand}
+                        {Number(product.stockQuantity) || 0}
                       </td>
 
                       <td>
-                        {product.size}
-                      </td>
-
-                      <td>
-                        {product.color}
-                      </td>
-
-                      <td>
-                        Rs. {product.actualPrice}
-                      </td>
-
-                      <td>
-                        {product.discount}%
-                      </td>
-
-                      <td>
-                        Rs. {salePrice}
-                      </td>
-
-                      <td>
-                        Rs. {product.purchasePrice ?? 0}
-                      </td>
-
-                      <td>
-                        {product.stockQuantity}
-                      </td>
-
-                      <td>
-
                         <button
-                          onClick={() =>
-                            handleEdit(product)
-                          }
+                          type="button"
+                          onClick={() => handleEdit(product)}
                         >
                           Edit
                         </button>
 
                         <button
+                          type="button"
                           onClick={() => {
-                            setDeleteProductId(
-                              product._id,
-                            );
+                            setDeleteProductId(product._id);
                             setShowDeleteModal(true);
                           }}
                         >
                           Delete
                         </button>
-
                       </td>
-
                     </tr>
                   );
                 })
               )}
-
             </tbody>
-
           </table>
-
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* DELETE CONFIRMATION MODAL */}
 
       {showDeleteModal && (
         <div
           className="delete-modal-overlay"
           onClick={cancelDelete}
         >
-
           <div
             className="delete-modal"
-            onClick={(e) =>
-              e.stopPropagation()
-            }
+            onClick={(e) => e.stopPropagation()}
           >
-
             <div className="delete-modal-icon">
               🗑️
             </div>
 
-            <h2>
-              Delete Dress?
-            </h2>
+            <h2>Delete Dress?</h2>
 
             <p>
-              Are you sure you want to
-              delete this dress?
+              Are you sure you want to delete this dress?
             </p>
 
             <div className="delete-modal-actions">
-
               <button
+                type="button"
                 className="cancel-delete-btn"
                 onClick={cancelDelete}
               >
@@ -513,19 +574,16 @@ function Products() {
               </button>
 
               <button
+                type="button"
                 className="confirm-delete-btn"
                 onClick={confirmDelete}
               >
                 Delete
               </button>
-
             </div>
-
           </div>
-
         </div>
       )}
-
     </div>
   );
 }
